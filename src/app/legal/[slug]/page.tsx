@@ -18,9 +18,10 @@ const pages: Record<string, { title: string; body: string[] }> = {
   refunds: {
     title: "Refunds and cancellation",
     body: [
-      "An unpaid gift hold expires automatically and is not charged.",
-      "A paid gift that expires unclaimed, or is revoked before it is claimed, is refunded in full.",
-      "After a claim, refunds are handled by an admin when the gift cannot be delivered.",
+      "An unpaid order expires automatically and is not charged.",
+      "A paid gift that is not redeemed within 30 days is refunded in full.",
+      "A digital file that has been downloaded is not refundable.",
+      "After redemption, refunds are handled by an admin when the gift cannot be delivered.",
     ],
   },
   shipping: {
