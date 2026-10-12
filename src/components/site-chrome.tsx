@@ -13,11 +13,14 @@ export function SiteHeader() {
           Givora
         </Link>
         <nav className="flex items-center gap-5 text-sm">
-          <Link href="/gifts" className="hover:text-gold">
-            Gifts
+          <Link href="/creators" className="hover:text-gold">
+            Creators
           </Link>
-          <Link href="/account/gifts" className="hover:text-gold">
+          <Link href="/account/orders" className="hover:text-gold">
             Sent
+          </Link>
+          <Link href="/account/wishlist" className="hover:text-gold">
+            My wishlist
           </Link>
           <Link href="/login" className="rounded-full bg-ink px-4 py-2 text-paper">
             Sign in

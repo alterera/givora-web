@@ -9,7 +9,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_API_URL: https://api.givora.in
+      NEXT_PUBLIC_API_URL: https://api.givoraworld.com
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

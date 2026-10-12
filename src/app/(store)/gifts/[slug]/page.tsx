@@ -20,16 +20,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <p className="mt-6 text-2xl">{variant ? formatInr(variant.pricePaise) : "Unavailable"}</p>
         {variant?.lowStock && <p className="mt-2 text-sm text-rose">Only a few left — a real count, not a trick.</p>}
         {product.giftedCount > 0 && <p className="mt-2 text-sm text-ink/50">Gifted {product.giftedCount} times</p>}
-        {variant && variant.available > 0 ? (
-          <Link
-            href={`/checkout?variant=${variant.id}&name=${encodeURIComponent(product.name)}&price=${variant.pricePaise}`}
-            className="mt-8 inline-flex rounded-full bg-ink px-6 py-3 text-paper"
-          >
-            Gift this
-          </Link>
-        ) : (
-          <p className="mt-8 text-rose">This one is waiting to be restocked.</p>
-        )}
+        <p className="mt-8 text-ink/70">Fans buy this from a creator wishlist, not from the catalogue on its own.</p>
+        <Link href="/creators" className="mt-4 inline-flex rounded-full bg-ink px-6 py-3 text-paper">
+          Find a creator
+        </Link>
       </div>
     </article>
   );
