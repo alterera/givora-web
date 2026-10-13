@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { formatInr } from "@/lib/money";
@@ -34,6 +33,7 @@ type Wishlist = {
 
 export default function WishlistPage() {
   const params = useParams<{ slug: string }>();
+  const router = useRouter();
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
   const [open, setOpen] = useState<Item | null>(null);
 
@@ -41,22 +41,9 @@ export default function WishlistPage() {
     void tgApi<Wishlist>(`/api/v1/creators/${params.slug}`).then(setWishlist).catch(() => toast.error("Wishlist unavailable"));
   }, [params.slug]);
 
-  function add(item: Item) {
-    const raw = localStorage.getItem("givora-cart");
-    const cart = raw ? (JSON.parse(raw) as { creatorId: string; slug: string; items: Item[] }) : null;
-    if (cart && cart.creatorId !== wishlist?.id) {
-      if (!confirm("Replace the gifts you picked for someone else?")) return;
-    }
-    const kept = cart && cart.creatorId === wishlist?.id ? cart.items : [];
-    const next = {
-      creatorId: wishlist?.id,
-      slug: wishlist?.slug,
-      name: wishlist?.displayName,
-      items: [...kept, item],
-    };
-    localStorage.setItem("givora-cart", JSON.stringify(next));
-    toast.success("Added to your gift");
-    setOpen(null);
+  function giftThis(item: Item) {
+    if (!wishlist || item.available === 0) return;
+    router.push(`/tg/checkout?creator=${wishlist.id}&variant=${item.variantId}&slug=${wishlist.slug}`);
   }
 
   if (!wishlist) return <p className="p-6">Loading wishlist…</p>;
@@ -77,9 +64,6 @@ export default function WishlistPage() {
           </button>
         ))}
       </div>
-      <Link className="mt-6 inline-flex rounded-full bg-ink px-5 py-3 text-paper" href="/tg/cart">
-        View gift cart
-      </Link>
       {open && (
         <div className="fixed inset-0 z-40 bg-ink/40 p-4" onClick={() => setOpen(null)}>
           <div className="mt-16 rounded-3xl bg-paper p-5" onClick={(event) => event.stopPropagation()}>
@@ -88,8 +72,8 @@ export default function WishlistPage() {
             <p className="mt-3">{formatInr(open.pricePaise)} {open.shippingPaise ? `+ ${formatInr(open.shippingPaise)} shipping` : "· shipping free"}</p>
             <p className="mt-2 text-xs opacity-70">{open.deliveryInfo}</p>
             <p className="mt-2 text-xs opacity-70">{open.refundTerms}</p>
-            <button type="button" className="mt-4 rounded-full bg-ink px-5 py-3 text-paper" disabled={open.available === 0} onClick={() => add(open)}>
-              Add to gift
+            <button type="button" className="mt-4 rounded-full bg-ink px-5 py-3 text-paper" disabled={open.available === 0} onClick={() => giftThis(open)}>
+              Gift this
             </button>
           </div>
         </div>

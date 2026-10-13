@@ -18,10 +18,11 @@ export default function CreatorHome() {
   if (missing) {
     return (
       <div className="px-5 py-8">
-        <h1 className="font-serif text-4xl">Become a creator</h1>
-        <Link className="mt-6 inline-flex rounded-full bg-ink px-5 py-3 text-paper" href="/tg/creator/apply">
-          Apply
-        </Link>
+        <h1 className="font-serif text-4xl">Creator access</h1>
+        <p className="mt-4 text-sm leading-relaxed opacity-80">
+          Creator accounts are set up by the GivoraWorld team after you have opened this app at least once in Telegram.
+          If you were invited, ask an admin to promote your Telegram account.
+        </p>
       </div>
     );
   }
