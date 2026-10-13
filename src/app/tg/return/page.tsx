@@ -7,14 +7,14 @@ import confetti from "canvas-confetti";
 import { tgApi } from "@/lib/tg-api";
 import { telegramApp } from "@/features/telegram/webapp";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
-import { openCashfreeCheckout } from "@/lib/open-cashfree-checkout";
 
 function ReturnInner() {
   const params = useSearchParams();
   const orderId = params.get("order_id") ?? params.get("orderId");
   const [headline, setHeadline] = useState("Waiting for payment");
-  const [detail, setDetail] = useState("Complete payment in the browser tab that opened. This screen updates automatically.");
-  const [retryUrl, setRetryUrl] = useState<string | null>(null);
+  const [detail, setDetail] = useState(
+    "Open your chat with GivoraWorldBot, scan the UPI QR, and pay. This screen updates when Cashfree confirms payment.",
+  );
 
   useEffect(() => {
     if (!orderId) return;
@@ -33,21 +33,18 @@ function ReturnInner() {
           }
           if (result.status === "FAILED") {
             setHeadline("Payment did not go through");
-            setDetail("You can try again from Sent or reopen checkout from the wishlist.");
+            setDetail("Request a new QR from checkout or check Sent orders.");
             clearInterval(timer);
           }
         })
         .catch(() => {
-          if (attempts > 8) setDetail("Still waiting for the bank. If you paid, give it a minute and keep this page open.");
+          if (attempts > 10) {
+            setDetail("Still waiting for the bank. If you already paid, keep this page open for a minute.");
+          }
         });
     }, 2000);
     return () => clearInterval(timer);
   }, [orderId]);
-
-  useEffect(() => {
-    const hosted = params.get("payUrl");
-    if (hosted) setRetryUrl(decodeURIComponent(hosted));
-  }, [params]);
 
   if (!orderId) {
     return (
@@ -65,16 +62,11 @@ function ReturnInner() {
         <h1 className="font-serif mt-2 text-3xl">{headline}</h1>
         <p className="mt-3 text-sm leading-relaxed opacity-80">{detail}</p>
       </div>
-      {retryUrl && headline !== "Payment confirmed" && (
-        <TgCard className="text-left text-sm">
-          <p className="opacity-80">Browser did not open?</p>
-          <button
-            type="button"
-            className="mt-3 w-full rounded-full bg-ink px-4 py-3 text-paper"
-            onClick={() => openCashfreeCheckout(retryUrl)}
-          >
-            Open payment again
-          </button>
+      {headline === "Waiting for payment" && (
+        <TgCard className="text-left text-sm leading-relaxed opacity-90">
+          <p>1. Switch to the bot chat (latest message has your QR).</p>
+          <p className="mt-2">2. Scan and pay with any UPI app.</p>
+          <p className="mt-2">3. Come back here — we detect payment automatically.</p>
         </TgCard>
       )}
       <Link className="inline-flex text-sm underline opacity-80" href={`/tg/orders/${orderId}`}>

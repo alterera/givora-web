@@ -5,7 +5,6 @@ import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ApiError, idempotencyKey } from "@/lib/api";
 import { formatInr } from "@/lib/money";
-import { openCashfreeCheckout } from "@/lib/open-cashfree-checkout";
 import { tgApi } from "@/lib/tg-api";
 import { telegramApp } from "@/features/telegram/webapp";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
@@ -64,6 +63,9 @@ function CheckoutBody() {
     }
     setBusy(true);
     try {
+      telegramApp()?.requestWriteAccess((granted) => {
+        if (granted) void tgApi("/api/v1/me/telegram/write-access", { method: "POST" });
+      });
       const order = await tgApi<{ id: string }>("/api/v1/orders", {
         method: "POST",
         headers: { "Idempotency-Key": idempotencyKey("order") },
@@ -75,19 +77,13 @@ function CheckoutBody() {
           items: [{ variantId, quantity: 1 }],
         }),
       });
-      const checkout = await tgApi<{
-        checkout: { sessionId: string; mode: "sandbox" | "production"; hostedUrl: string };
-      }>(`/api/v1/orders/${order.id}/checkout`, {
+      await tgApi<{ telegramPayment?: { sent: boolean } }>(`/api/v1/orders/${order.id}/checkout`, {
         method: "POST",
         headers: { "Idempotency-Key": idempotencyKey("pay") },
         body: JSON.stringify({ phone, channel: "telegram" }),
       });
-      telegramApp()?.requestWriteAccess((granted) => {
-        if (granted) void tgApi("/api/v1/me/telegram/write-access", { method: "POST" });
-      });
-      const payUrl = encodeURIComponent(checkout.checkout.hostedUrl);
-      router.push(`/tg/return?orderId=${order.id}&payUrl=${payUrl}`);
-      openCashfreeCheckout(checkout.checkout.hostedUrl);
+      toast.success("Payment QR sent in your Telegram chat");
+      router.push(`/tg/return?orderId=${order.id}`);
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : "Checkout failed");
     } finally {
@@ -124,11 +120,13 @@ function CheckoutBody() {
       ) : (
         <p className="text-sm opacity-70">Loading gift…</p>
       )}
-      <p className="text-sm opacity-70">Payment opens in your browser so UPI apps work. Return here when you are done.</p>
+      <TgCard className="text-sm leading-relaxed opacity-90">
+        We send a <strong>UPI QR code</strong> in your chat with GivoraWorldBot. Scan it with GPay, PhonePe, or Paytm — no browser checkout.
+      </TgCard>
       <TextArea label="Note to the creator" value={message} onChange={(event) => setMessage(event.target.value)} />
       <Field label="Mobile for the payment receipt" value={phone} onChange={(event) => setPhone(event.target.value)} />
       <Button type="button" disabled={busy || !line} onClick={() => void pay()}>
-        {busy ? "Starting payment…" : "Pay in browser"}
+        {busy ? "Sending payment QR…" : "Send payment QR in Telegram"}
       </Button>
     </TgPage>
   );
