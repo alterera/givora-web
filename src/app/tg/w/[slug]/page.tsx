@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { formatInr } from "@/lib/money";
 import { tgApi } from "@/lib/tg-api";
 
@@ -46,27 +47,35 @@ export default function WishlistPage() {
     router.push(`/tg/checkout?creator=${wishlist.id}&variant=${item.variantId}&slug=${wishlist.slug}`);
   }
 
-  if (!wishlist) return <p className="p-6">Loading wishlist…</p>;
+  if (!wishlist) {
+    return (
+      <TgPage className="flex min-h-[40dvh] items-center justify-center">
+        <p className="text-sm opacity-70">Loading wishlist…</p>
+      </TgPage>
+    );
+  }
   return (
-    <div className="px-5 py-8">
+    <TgPage className="space-y-5">
       <p className="text-sm uppercase tracking-[0.2em] text-gold">Wishlist of {wishlist.displayName}</p>
-      <h1 className="font-serif mt-2 text-4xl">Send a gift. Make their day.</h1>
+      <h1 className="font-serif text-3xl">Send a gift. Make their day.</h1>
       <p className="mt-3 text-sm opacity-80">{wishlist.giftNote || wishlist.bio}</p>
       {wishlist.personaDisclosure && <p className="mt-2 text-xs opacity-60">{wishlist.personaDisclosure}</p>}
       <div className="mt-6 space-y-3">
         {wishlist.items.map((item) => (
-          <button key={item.variantId} type="button" className="w-full rounded-3xl bg-white p-4 text-left" onClick={() => setOpen(item)}>
+          <button key={item.variantId} type="button" className="w-full text-left" onClick={() => setOpen(item)}>
+            <TgCard className="w-full">
             <p className="text-xs uppercase tracking-widest text-gold">{item.type === "DIGITAL" ? "Digital" : "Physical"}</p>
             <h2 className="font-serif text-2xl">{item.productName}</h2>
             <p className="mt-1">{formatInr(item.pricePaise)}</p>
             {item.lowStock && <p className="text-xs text-rose">Only a few left</p>}
             {item.available === 0 && <p className="text-xs text-rose">Unavailable</p>}
+            </TgCard>
           </button>
         ))}
       </div>
       {open && (
         <div className="fixed inset-0 z-40 bg-ink/40 p-4" onClick={() => setOpen(null)}>
-          <div className="mt-16 rounded-3xl bg-paper p-5" onClick={(event) => event.stopPropagation()}>
+          <div className="mt-16 rounded-3xl bg-[var(--tg-secondary-bg-color,#fff)] p-5 text-[var(--tg-text-color,var(--ink))]" onClick={(event) => event.stopPropagation()}>
             <h2 className="font-serif text-3xl">{open.productName}</h2>
             <p className="mt-2 text-sm">{open.description}</p>
             <p className="mt-3">{formatInr(open.pricePaise)} {open.shippingPaise ? `+ ${formatInr(open.shippingPaise)} shipping` : "· shipping free"}</p>
@@ -78,6 +87,6 @@ export default function WishlistPage() {
           </div>
         </div>
       )}
-    </div>
+    </TgPage>
   );
 }

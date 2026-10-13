@@ -5,8 +5,10 @@ import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ApiError, idempotencyKey } from "@/lib/api";
 import { formatInr } from "@/lib/money";
+import { openCashfreeCheckout } from "@/lib/open-cashfree-checkout";
 import { tgApi } from "@/lib/tg-api";
 import { telegramApp } from "@/features/telegram/webapp";
+import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { Field, TextArea } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 
@@ -15,7 +17,6 @@ type WishlistItem = {
   productName: string;
   pricePaise: number;
   shippingPaise: number;
-  type: string;
 };
 
 type Wishlist = {
@@ -74,26 +75,19 @@ function CheckoutBody() {
           items: [{ variantId, quantity: 1 }],
         }),
       });
-      const checkout = await tgApi<{ checkout: { sessionId: string; mode: "sandbox" | "production" } }>(
-        `/api/v1/orders/${order.id}/checkout`,
-        {
-          method: "POST",
-          headers: { "Idempotency-Key": idempotencyKey("pay") },
-          body: JSON.stringify({ phone, channel: "telegram" }),
-        },
-      );
+      const checkout = await tgApi<{
+        checkout: { sessionId: string; mode: "sandbox" | "production"; hostedUrl: string };
+      }>(`/api/v1/orders/${order.id}/checkout`, {
+        method: "POST",
+        headers: { "Idempotency-Key": idempotencyKey("pay") },
+        body: JSON.stringify({ phone, channel: "telegram" }),
+      });
       telegramApp()?.requestWriteAccess((granted) => {
         if (granted) void tgApi("/api/v1/me/telegram/write-access", { method: "POST" });
       });
-      const { load } = await import("@cashfreepayments/cashfree-js");
-      const cashfree = await load({ mode: checkout.checkout.mode });
-      try {
-        await cashfree.checkout({ paymentSessionId: checkout.checkout.sessionId, redirectTarget: "_self" });
-      } catch {
-        telegramApp()?.openLink(`${window.location.origin}/tg/return`);
-        toast("If UPI does not open here, complete payment in the browser.");
-      }
-      router.push(`/tg/return?orderId=${order.id}`);
+      const payUrl = encodeURIComponent(checkout.checkout.hostedUrl);
+      router.push(`/tg/return?orderId=${order.id}&payUrl=${payUrl}`);
+      openCashfreeCheckout(checkout.checkout.hostedUrl);
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : "Checkout failed");
     } finally {
@@ -102,40 +96,47 @@ function CheckoutBody() {
   }
 
   if (!slug || !variantId) {
-    return <p className="px-5 py-8 text-sm opacity-70">Pick a gift from a creator wishlist to check out.</p>;
+    return (
+      <TgPage>
+        <p className="text-sm opacity-70">Pick a gift from a creator wishlist to check out.</p>
+      </TgPage>
+    );
   }
 
   const total = line ? line.pricePaise + line.shippingPaise : null;
 
   return (
-    <div className="space-y-4 px-5 py-8">
-      <h1 className="font-serif text-4xl">Pay for this gift</h1>
+    <TgPage className="space-y-5">
+      <div>
+        <p className="text-sm uppercase tracking-[0.2em] text-gold">Checkout</p>
+        <h1 className="font-serif mt-2 text-3xl">Pay for this gift</h1>
+      </div>
       {line ? (
-        <div className="rounded-3xl bg-white p-4">
+        <TgCard>
           <p className="text-sm text-gold">{creatorName}</p>
           <p className="font-serif text-2xl">{line.productName}</p>
-          <p className="mt-2 text-sm">
+          <p className="mt-2 text-sm opacity-80">
             {formatInr(line.pricePaise)}
             {line.shippingPaise ? ` + ${formatInr(line.shippingPaise)} shipping` : " · shipping free"}
           </p>
           {total !== null && <p className="mt-2 font-medium">Total {formatInr(total)}</p>}
-        </div>
+        </TgCard>
       ) : (
         <p className="text-sm opacity-70">Loading gift…</p>
       )}
-      <p className="text-sm opacity-70">The creator receives the product, not the money. Their address stays private.</p>
+      <p className="text-sm opacity-70">Payment opens in your browser so UPI apps work. Return here when you are done.</p>
       <TextArea label="Note to the creator" value={message} onChange={(event) => setMessage(event.target.value)} />
       <Field label="Mobile for the payment receipt" value={phone} onChange={(event) => setPhone(event.target.value)} />
       <Button type="button" disabled={busy || !line} onClick={() => void pay()}>
-        {busy ? "Opening payment…" : "Pay"}
+        {busy ? "Starting payment…" : "Pay in browser"}
       </Button>
-    </div>
+    </TgPage>
   );
 }
 
 export default function TelegramCheckout() {
   return (
-    <Suspense fallback={<p className="px-5 py-8">Loading checkout…</p>}>
+    <Suspense fallback={<TgPage><p className="text-sm opacity-70">Loading checkout…</p></TgPage>}>
       <CheckoutBody />
     </Suspense>
   );

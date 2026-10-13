@@ -1,48 +1,92 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import { tgApi } from "@/lib/tg-api";
 import { telegramApp } from "@/features/telegram/webapp";
+import { TgCard, TgPage } from "@/features/telegram/tg-shell";
+import { openCashfreeCheckout } from "@/lib/open-cashfree-checkout";
 
 function ReturnInner() {
   const params = useSearchParams();
   const orderId = params.get("order_id") ?? params.get("orderId");
-  const [status, setStatus] = useState("Confirming payment…");
+  const [headline, setHeadline] = useState("Waiting for payment");
+  const [detail, setDetail] = useState("Complete payment in the browser tab that opened. This screen updates automatically.");
+  const [retryUrl, setRetryUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!orderId) return;
+    let attempts = 0;
     const timer = setInterval(() => {
-      void tgApi<{ orderStatus: string }>(`/api/v1/payments/provider-order/status?orderId=${encodeURIComponent(orderId)}`)
+      attempts += 1;
+      void tgApi<{ orderStatus: string; status: string }>(`/api/v1/payments/orders/${orderId}/status`)
         .then((result) => {
           if (result.orderStatus === "CONFIRMED") {
-            setStatus("Payment confirmed. The creator has been notified.");
+            setHeadline("Payment confirmed");
+            setDetail("The creator has been notified. Thank you for the gift.");
             telegramApp()?.HapticFeedback.impactOccurred("medium");
             void confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
             clearInterval(timer);
+            return;
+          }
+          if (result.status === "FAILED") {
+            setHeadline("Payment did not go through");
+            setDetail("You can try again from Sent or reopen checkout from the wishlist.");
+            clearInterval(timer);
           }
         })
-        .catch(() => setStatus("Still waiting for the bank."));
+        .catch(() => {
+          if (attempts > 8) setDetail("Still waiting for the bank. If you paid, give it a minute and keep this page open.");
+        });
     }, 2000);
     return () => clearInterval(timer);
   }, [orderId]);
 
+  useEffect(() => {
+    const hosted = params.get("payUrl");
+    if (hosted) setRetryUrl(decodeURIComponent(hosted));
+  }, [params]);
+
+  if (!orderId) {
+    return (
+      <TgPage className="text-center">
+        <h1 className="font-serif text-3xl">No order found</h1>
+        <p className="mt-3 text-sm opacity-70">Start checkout from a wishlist again.</p>
+      </TgPage>
+    );
+  }
+
   return (
-    <div className="px-5 py-16 text-center">
-      <h1 className="font-serif text-4xl">{status}</h1>
-      {orderId && (
-        <a className="mt-6 inline-flex underline" href={`/tg/orders/${orderId}`}>
-          View this gift
-        </a>
+    <TgPage className="space-y-6 text-center">
+      <div>
+        <p className="text-sm uppercase tracking-[0.2em] text-gold">Payment</p>
+        <h1 className="font-serif mt-2 text-3xl">{headline}</h1>
+        <p className="mt-3 text-sm leading-relaxed opacity-80">{detail}</p>
+      </div>
+      {retryUrl && headline !== "Payment confirmed" && (
+        <TgCard className="text-left text-sm">
+          <p className="opacity-80">Browser did not open?</p>
+          <button
+            type="button"
+            className="mt-3 w-full rounded-full bg-ink px-4 py-3 text-paper"
+            onClick={() => openCashfreeCheckout(retryUrl)}
+          >
+            Open payment again
+          </button>
+        </TgCard>
       )}
-    </div>
+      <Link className="inline-flex text-sm underline opacity-80" href={`/tg/orders/${orderId}`}>
+        View this gift
+      </Link>
+    </TgPage>
   );
 }
 
 export default function ReturnPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<TgPage><p className="text-center text-sm opacity-70">Loading…</p></TgPage>}>
       <ReturnInner />
     </Suspense>
   );

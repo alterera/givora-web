@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { telegramApp } from "@/features/telegram/webapp";
+import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { tgApi } from "@/lib/tg-api";
 
 function startParam() {
@@ -37,24 +38,30 @@ export default function TelegramEntry() {
   }, [router]);
 
   if (!showAbout) {
-    return <p className="p-6 text-center text-sm opacity-70">Loading…</p>;
+    return (
+      <TgPage className="flex min-h-[50dvh] items-center justify-center">
+        <p className="text-center text-sm opacity-70">Loading…</p>
+      </TgPage>
+    );
   }
 
   return (
-    <div className="px-5 py-10">
-      <p className="text-sm uppercase tracking-[0.2em] text-gold">GivoraWorld</p>
-      <h1 className="font-serif mt-3 text-4xl">Gifts that feel personal</h1>
-      <p className="mt-4 text-sm leading-relaxed opacity-80">
+    <TgPage className="space-y-5">
+      <div>
+        <p className="text-sm uppercase tracking-[0.2em] text-gold">GivoraWorld</p>
+        <h1 className="font-serif mt-2 text-3xl">Gifts that feel personal</h1>
+      </div>
+      <p className="text-sm leading-relaxed opacity-80">
         GivoraWorld connects fans and creators through private wishlists. You buy a real gift from a creator&apos;s own link;
         they receive the product, not cash, and their home address never appears on the page.
       </p>
-      <p className="mt-4 text-sm leading-relaxed opacity-80">
+      <p className="text-sm leading-relaxed opacity-80">
         Open a creator&apos;s Telegram or web link to see what they wish for, send one gift at a time, and track what you sent
         from <span className="font-medium">Sent</span> in the menu below.
       </p>
-      <p className="mt-6 rounded-2xl bg-white/80 p-4 text-sm opacity-70">
+      <TgCard className="text-sm opacity-80">
         No wishlist link yet? Ask your favourite creator to share theirs from GivoraWorld.
-      </p>
-    </div>
+      </TgCard>
+    </TgPage>
   );
 }

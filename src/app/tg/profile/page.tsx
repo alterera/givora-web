@@ -1,6 +1,7 @@
 "use client";
 
 import { useTelegramSession } from "@/features/telegram/session";
+import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 
 export default function ProfilePage() {
   const { account, photoUrl } = useTelegramSession();
@@ -12,7 +13,7 @@ export default function ProfilePage() {
   });
   const initial = name.slice(0, 1).toUpperCase();
   return (
-    <div className="px-5 py-10">
+    <TgPage>
       <p className="text-sm uppercase tracking-[0.2em] text-gold">Profile</p>
       <div className="mt-8 flex flex-col items-center text-center">
         {photoUrl ? (
@@ -24,8 +25,8 @@ export default function ProfilePage() {
         )}
         <h1 className="font-serif mt-5 text-4xl">{name}</h1>
         <p className="mt-2 text-ink/70">{account.telegramUsername ? `@${account.telegramUsername}` : "No public username"}</p>
-        <p className="mt-6 rounded-full bg-white px-4 py-2 text-sm">Member since {since}</p>
+        <TgCard className="mt-6 inline-block rounded-full px-4 py-2 text-sm">Member since {since}</TgCard>
       </div>
-    </div>
+    </TgPage>
   );
 }

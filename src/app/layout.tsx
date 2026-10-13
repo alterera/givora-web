@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${outfit.variable} ${fraunces.variable} h-full`}>
-      <body className="flex min-h-full flex-col antialiased">
+      <body className="flex min-h-full flex-col antialiased [html:has([data-tg-shell])_&]:bg-transparent">
         <Providers>
           <SiteHeader />
           <main className="flex-1">{children}</main>

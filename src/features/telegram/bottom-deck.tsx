@@ -31,6 +31,7 @@ export function BottomDeck() {
   }, [status]);
 
   if (status !== "ready") return null;
+  if (path.startsWith("/tg/checkout") || path.startsWith("/tg/return")) return null;
 
   const items = creator ? creatorItems : fanItems;
 

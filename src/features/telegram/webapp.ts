@@ -13,6 +13,7 @@ export type TelegramWebApp = {
     start_param?: string;
   };
   themeParams: Record<string, string>;
+  viewportStableHeight?: number;
   BackButton: { show: () => void; hide: () => void; onClick: (cb: () => void) => void; offClick: (cb: () => void) => void };
   MainButton: { setText: (text: string) => void; show: () => void; hide: () => void; onClick: (cb: () => void) => void; offClick: (cb: () => void) => void };
   HapticFeedback: { impactOccurred: (style: string) => void };

@@ -31,8 +31,17 @@ export function TelegramSession({ children }: { children: React.ReactNode }) {
       app.ready();
       app.expand();
       const root = document.documentElement;
+      const viewport = (app as { viewportStableHeight?: number }).viewportStableHeight;
+      if (viewport && viewport > 0) {
+        root.style.setProperty("--tg-viewport-height", `${viewport}px`);
+      }
       for (const [key, value] of Object.entries(app.themeParams ?? {})) {
         root.style.setProperty(`--tg-${key.replace(/_/g, "-")}`, value);
+      }
+      const bg = app.themeParams?.bg_color;
+      if (bg) {
+        root.style.backgroundColor = bg;
+        document.body.style.backgroundColor = bg;
       }
       const account = await ensureTelegramSession();
       if (cancelled) return;
