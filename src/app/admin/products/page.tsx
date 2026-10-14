@@ -1,23 +1,27 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Plus, Sparkles } from "lucide-react";
+import { ImagePlus, Pencil, Plus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
+import { uploadProductImage } from "@/lib/admin-product-media";
 import { formatInr } from "@/lib/money";
 import { AdminCard } from "@/components/admin/admin-card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Button } from "@/components/ui/button";
 import { Field, TextArea } from "@/components/ui/field";
 
-type AdminProduct = {
+export type AdminProduct = {
   id: string;
   name: string;
   slug: string;
+  description: string;
   status: string;
-  images?: Array<{ url: string }>;
-  variants: Array<{ id: string; sku: string; onHand: number; reserved: number; pricePaise: number }>;
+  type: string;
+  images: Array<{ id: string; url: string; alt: string | null }>;
+  variants: Array<{ id: string; sku: string; name: string; onHand: number; reserved: number; pricePaise: number }>;
 };
 
 function slugify(input: string) {
@@ -36,6 +40,7 @@ export default function AdminProductsPage() {
     queryFn: () => api<AdminProduct[]>("/api/v1/admin/products"),
   });
   const products = productsQuery.data ?? [];
+  const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
@@ -74,7 +79,8 @@ export default function AdminProductsPage() {
           onHand: 50,
         }),
       });
-      toast.success(`Created "${payload.name}" (${formatInr(payload.pricePaise)})`);
+      toast.success(`Created "${payload.name}"`);
+      setShowCreate(false);
       setName("");
       setSlug("");
       setDescription("");
@@ -103,32 +109,13 @@ export default function AdminProductsPage() {
     });
   }
 
-  async function seedOneRupeeProduct() {
-    const suffix = Date.now().toString().slice(-4);
-    await createProduct({
-      name: "Classic Creator Postcard (₹1)",
-      slug: `classic-creator-postcard-${suffix}`,
-      description: "A signature ₹1 Givora thank-you token to test instant creator gifting.",
-      sku: `GIFT-1RS-${suffix}`,
-      pricePaise: 100,
-    });
-  }
-
-  async function upload(productId: string, file: File) {
+  async function quickUpload(productId: string, file: File) {
     try {
-      const presign = await api<{ uploadUrl: string; publicUrl: string }>("/api/v1/admin/media/presign", {
-        method: "POST",
-        body: JSON.stringify({ fileName: file.name, contentType: file.type }),
-      });
-      await fetch(presign.uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-      await api(`/api/v1/admin/products/${productId}/images`, {
-        method: "POST",
-        body: JSON.stringify({ url: presign.publicUrl, alt: file.name }),
-      });
-      toast.success("Product image uploaded");
+      await uploadProductImage(productId, file);
+      toast.success("Image added");
       await refresh();
     } catch {
-      toast.error("Image upload failed");
+      toast.error("Upload failed");
     }
   }
 
@@ -138,157 +125,129 @@ export default function AdminProductsPage() {
     <div className="mx-auto max-w-6xl space-y-8">
       <AdminPageHeader
         title="Catalogue"
-        description="Create gift products, manage stock, upload images, and quick-add the ₹1 test gift."
-      />
-      <div className="grid gap-8 lg:grid-cols-12">
-      <section className="space-y-4 lg:col-span-5">
-        <AdminCard className="p-6">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gold">Catalogue</p>
-              <h1 className="font-serif mt-1 text-2xl">Add New Product</h1>
-            </div>
-            {!hasOneRupee && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void seedOneRupeeProduct()}
-                className="inline-flex items-center gap-1.5 rounded-full bg-gold/15 px-3.5 py-2 text-xs font-semibold text-gold transition hover:bg-gold/25"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                + Add ₹1 Test Gift
-              </button>
-            )}
-          </div>
+        description="Manage gift products, images, pricing, and inventory."
+      >
+        <Button type="button" variant="ghost" className="rounded-lg" onClick={() => setShowCreate((v) => !v)}>
+          <Plus className="h-4 w-4" />
+          New product
+        </Button>
+        {!hasOneRupee && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="rounded-lg text-gold"
+            disabled={busy}
+            onClick={() =>
+              void createProduct({
+                name: "Classic Creator Postcard (₹1)",
+                slug: `classic-creator-postcard-${Date.now().toString().slice(-4)}`,
+                description: "A signature ₹1 Givora thank-you token to test instant creator gifting.",
+                sku: `GIFT-1RS-${Date.now().toString().slice(-4)}`,
+                pricePaise: 100,
+              })
+            }
+          >
+            <Sparkles className="h-4 w-4" />
+            ₹1 test gift
+          </Button>
+        )}
+      </AdminPageHeader>
 
-          <form className="mt-5 space-y-3" onSubmit={create}>
-            <Field
-              label="Product name"
-              placeholder="e.g. Handwritten Thank-You Postcard"
-              value={name}
-              onChange={(event) => {
-                setName(event.target.value);
-                if (!slug) setSlug(slugify(event.target.value));
-              }}
-              required
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <Field
-                label="Price in ₹ (Rupees)"
-                type="number"
-                min={1}
-                step="1"
-                value={priceRupees}
-                onChange={(event) => setPriceRupees(event.target.value)}
-                required
-              />
-              <Field
-                label="SKU"
-                placeholder="GIFT-001"
-                value={sku}
-                onChange={(event) => setSku(event.target.value)}
-                required
-              />
+      {showCreate && (
+        <AdminCard className="p-6">
+          <h2 className="font-serif text-xl">Create product</h2>
+          <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={create}>
+            <Field label="Name" value={name} onChange={(e) => { setName(e.target.value); if (!slug) setSlug(slugify(e.target.value)); }} required />
+            <Field label="Slug" value={slug} onChange={(e) => setSlug(slugify(e.target.value))} required />
+            <Field label="Price (₹)" type="number" min={1} value={priceRupees} onChange={(e) => setPriceRupees(e.target.value)} required />
+            <Field label="SKU" value={sku} onChange={(e) => setSku(e.target.value)} required />
+            <div className="sm:col-span-2">
+              <TextArea label="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
             </div>
-            <Field
-              label="URL slug"
-              placeholder="thank-you-postcard"
-              value={slug}
-              onChange={(event) => setSlug(slugify(event.target.value))}
-              required
-            />
-            <TextArea
-              label="Description"
-              placeholder="Describe what the creator receives…"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              required
-            />
-            <Button type="submit" className="w-full" disabled={busy}>
-              <Plus className="mr-1.5 inline h-4 w-4" />
-              {busy ? "Adding…" : `Add product (${formatInr(Math.round((Number(priceRupees) || 0) * 100))})`}
-            </Button>
+            <div className="sm:col-span-2">
+              <Button type="submit" disabled={busy}>Create product</Button>
+            </div>
           </form>
         </AdminCard>
-      </section>
+      )}
 
-      <section className="space-y-4 lg:col-span-7">
-        <AdminCard className="p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gold">Inventory</p>
-              <h2 className="font-serif mt-1 text-2xl">Catalogue Products ({products.length})</h2>
-            </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void seedOneRupeeProduct()}
-              className="glass-subtle inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-medium text-ink hover:opacity-90"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-gold" />
-              Quick-create ₹1 Gift
-            </button>
-          </div>
-
-          {productsQuery.error instanceof ApiError && (
-            <p className="mt-4 rounded-2xl bg-rose/10 p-3 text-sm text-rose">{productsQuery.error.message}</p>
-          )}
-
-          <div className="mt-5 space-y-3">
-            {products.map((product) => (
-              <article
-                key={product.id}
-                className="glass-subtle flex flex-col justify-between gap-4 rounded-2xl p-4 sm:flex-row sm:items-center"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-serif text-xl">{product.name}</h3>
-                    <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 [html[data-theme=light]_&]:text-emerald-800">
-                      {product.status}
-                    </span>
-                  </div>
-                  {product.variants.map((variant) => (
-                    <div key={variant.id} className="flex flex-wrap items-center gap-3 text-xs text-ink/80">
-                      <span className="font-semibold text-gold">{formatInr(variant.pricePaise)}</span>
-                      <span className="font-mono">{variant.sku}</span>
-                      <span>
-                        Stock: <strong>{variant.onHand}</strong> on hand · {variant.reserved} reserved
-                      </span>
-                      <button
-                        type="button"
-                        className="glass-subtle rounded-full px-2.5 py-0.5 font-medium hover:opacity-90"
-                        onClick={() =>
-                          void api(`/api/v1/admin/variants/${variant.id}/stock`, {
-                            method: "PATCH",
-                            body: JSON.stringify({ delta: 10, reason: "Manual restock" }),
-                          }).then(refresh)
-                        }
-                      >
-                        +10 stock
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <label className="glass-subtle inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-medium text-ink hover:opacity-90">
-                  <ImagePlus className="h-3.5 w-3.5" />
-                  Upload photo
-                  <input
-                    className="hidden"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (file) void upload(product.id, file);
-                    }}
-                  />
-                </label>
-              </article>
-            ))}
-          </div>
-        </AdminCard>
-      </section>
-      </div>
+      <AdminCard className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[800px] text-left text-sm">
+            <thead className="border-b border-border bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3">Product</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Price</th>
+                <th className="px-4 py-3">Stock</th>
+                <th className="px-4 py-3">Images</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {products.map((product) => {
+                const variant = product.variants[0];
+                const thumb = product.images[0]?.url;
+                return (
+                  <tr key={product.id} className="hover:bg-muted/20">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+                          {thumb ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={thumb} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">No img</div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium">{product.name}</p>
+                          <p className="font-mono text-xs text-muted-foreground">/{product.slug}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">{product.status}</span>
+                    </td>
+                    <td className="px-4 py-3">{variant ? formatInr(variant.pricePaise) : "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {variant ? `${variant.onHand} on hand · ${variant.reserved} reserved` : "—"}
+                    </td>
+                    <td className="px-4 py-3">{product.images.length}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs hover:bg-muted/40">
+                          <ImagePlus className="h-3.5 w-3.5" />
+                          Upload
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) void quickUpload(product.id, file);
+                            }}
+                          />
+                        </label>
+                        <Link
+                          href={`/admin/products/${product.id}`}
+                          className="inline-flex items-center gap-1 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {productsQuery.error instanceof ApiError && (
+          <p className="border-t border-border p-4 text-sm text-rose">{productsQuery.error.message}</p>
+        )}
+      </AdminCard>
     </div>
   );
 }

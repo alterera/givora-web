@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Gift, ShieldCheck, Sparkles, X } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
+import { WishlistWheel } from "@/features/telegram/wishlist-wheel";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { formatInr } from "@/lib/money";
 import { tgApi } from "@/lib/tg-api";
@@ -47,6 +48,7 @@ export default function WishlistPage() {
   } | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     void tgApi<Wishlist>(`/api/v1/creators/${params.slug}`)
@@ -125,53 +127,19 @@ export default function WishlistPage() {
         <p className="px-1 text-xs opacity-60">{wishlist.personaDisclosure}</p>
       )}
 
-      <div className="space-y-3">
-        {wishlist.items.length === 0 ? (
-          <TgCard className="p-6 text-center text-sm opacity-70">
-            No gifts are listed on this wishlist yet.
-          </TgCard>
-        ) : (
-          wishlist.items.map((item) => (
-            <TgCard key={item.variantId} className="space-y-3 p-5">
-              <div className="flex items-start justify-between gap-3">
-                <button
-                  type="button"
-                  className="text-left"
-                  onClick={() => setOpen(item)}
-                >
-                  <span className="inline-block rounded-full bg-gold/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold">
-                    {item.type === "DIGITAL" ? "Digital" : "Physical Gift"}
-                  </span>
-                  <h2 className="font-serif mt-1.5 text-2xl leading-snug">{item.productName}</h2>
-                  {item.description && (
-                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed opacity-75">{item.description}</p>
-                  )}
-                </button>
-                <p className="font-serif shrink-0 text-xl font-medium">{formatInr(item.pricePaise)}</p>
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  type="button"
-                  onClick={() => setOpen(item)}
-                  className="text-xs font-medium opacity-60 underline"
-                >
-                  Details
-                </button>
-                <button
-                  type="button"
-                  disabled={item.available === 0}
-                  onClick={() => giftThis(item)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-xs font-medium text-paper transition active:scale-95 disabled:opacity-40"
-                >
-                  <Gift className="h-3.5 w-3.5" />
-                  {item.available === 0 ? "Out of stock" : `Gift · ${formatInr(item.pricePaise)}`}
-                </button>
-              </div>
-            </TgCard>
-          ))
-        )}
-      </div>
+      {wishlist.items.length === 0 ? (
+        <TgCard className="p-6 text-center text-sm opacity-70">
+          No gifts are listed on this wishlist yet.
+        </TgCard>
+      ) : (
+        <WishlistWheel
+          items={wishlist.items}
+          activeIndex={activeIndex}
+          onActiveIndexChange={setActiveIndex}
+          onGift={giftThis}
+          onDetails={setOpen}
+        />
+      )}
 
       <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs opacity-60">
         <ShieldCheck className="h-3.5 w-3.5" /> Creator receives the item, never cash. Address stays private.

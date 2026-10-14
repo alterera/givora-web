@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Grainient from "./grainient";
+import DarkVeil from "./dark-veil";
 import { telegramApp } from "@/features/telegram/webapp";
-
-const GIVORA_COLORS = ["#120f17", "#2a0f0a", "#9a3412", "#f97316", "#fed7aa"];
 
 function hexLuminance(hex?: string): number | null {
   if (!hex) return null;
@@ -38,6 +36,7 @@ export function applyDocumentTheme(scheme: "dark" | "light") {
 
 export function AppBackground() {
   const [scheme, setScheme] = useState<"dark" | "light">("dark");
+  const [finePointer, setFinePointer] = useState(false);
 
   useEffect(() => {
     const sync = () => {
@@ -46,6 +45,7 @@ export function AppBackground() {
       applyDocumentTheme(next);
     };
     sync();
+    setFinePointer(window.matchMedia("(pointer: fine)").matches);
 
     const tg = telegramApp();
     tg?.onEvent?.("themeChanged", sync);
@@ -62,21 +62,32 @@ export function AppBackground() {
   const isLight = scheme === "light";
 
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <Grainient
-        colors={GIVORA_COLORS}
-        angle={55}
-        flow={0.8}
-        silk={0.35}
-        grainAmount={0.08}
-        lightMode={isLight}
+    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[#0a0810]">
+      <DarkVeil
         className="h-full w-full"
+        color={isLight ? "#be123c" : "#9d4edd"}
+        speed={0.45}
+        scale={1.15}
+        flow={1.1}
+        warp={0.15}
+        variation={2}
+        brightness={isLight ? 0.85 : 1}
+        sheen={0.35}
+        glow={0.42}
+        grain={0.035}
+        quality={0.55}
+        mouseInteraction={finePointer}
+        mouseStrength={0.85}
+        intro
+        fade={0.12}
+        opacity={1}
+        lightMode={isLight}
       />
       <div
         className={
           isLight
-            ? "absolute inset-0 bg-gradient-to-b from-white/35 via-white/15 to-white/40"
-            : "absolute inset-0 bg-gradient-to-b from-black/35 via-black/15 to-black/45"
+            ? "absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-white/35"
+            : "absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/55"
         }
       />
     </div>
