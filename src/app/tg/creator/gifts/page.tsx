@@ -3,10 +3,17 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Gift as GiftIcon } from "lucide-react";
+import { SupporterChip } from "@/features/aura/supporter-chip";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { tgApi } from "@/lib/tg-api";
 
-type Gift = { id: string; status: string; productName: string; from: string };
+type Gift = {
+  id: string;
+  status: string;
+  productName: string;
+  from: string;
+  supporter?: { earnedAura: number; tier: { id: string; name: string } };
+};
 
 const STATUS_LABELS: Record<string, string> = {
   AWAITING_REDEMPTION: "Ready to unwrap & redeem",
@@ -68,7 +75,10 @@ export default function GiftInbox() {
                   <TgCard className="flex items-center justify-between p-4 transition hover:opacity-95">
                     <div>
                       <p className="font-serif text-xl">{gift.productName}</p>
-                      <p className="mt-0.5 text-xs opacity-70">From {gift.from}</p>
+                      <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs opacity-70">
+                        <span>From {gift.from}</span>
+                        {gift.supporter && <SupporterChip supporter={gift.supporter} />}
+                      </p>
                     </div>
                     <span className="rounded-full bg-ink px-3.5 py-1.5 text-xs font-medium text-paper">
                       {status === "AWAITING_REDEMPTION" ? "Redeem" : "View"}

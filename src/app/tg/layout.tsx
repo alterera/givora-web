@@ -46,7 +46,10 @@ function Gate({ children }: { children: React.ReactNode }) {
 
 function TgRoot({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const immersive = path.startsWith("/tg/checkout") || path.startsWith("/tg/return");
+  const immersive =
+    path.startsWith("/tg/checkout") ||
+    path.startsWith("/tg/return") ||
+    path.startsWith("/tg/profile/studio/return");
   const bottomPad = immersive ? "pb-[max(1.5rem,env(safe-area-inset-bottom))]" : "pb-[calc(7rem+env(safe-area-inset-bottom))]";
 
   return (
@@ -55,7 +58,7 @@ function TgRoot({ children }: { children: React.ReactNode }) {
       className={`min-h-[var(--tg-viewport-height,100dvh)] ${bottomPad} bg-transparent text-ink`}
     >
       <Gate>{children}</Gate>
-      <BottomDeck />
+      {!immersive && <BottomDeck />}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { ArrowLeft, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { ApiError, idempotencyKey } from "@/lib/api";
 import { tgApi } from "@/lib/tg-api";
+import { SupporterChip } from "@/features/aura/supporter-chip";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { Unwrap } from "@/components/gift-reveal/unwrap";
 import { Field } from "@/components/ui/field";
@@ -18,6 +19,7 @@ type Gift = {
   openedAt: string | null;
   message: string;
   from: string;
+  supporter?: { earnedAura: number; tier: { id: string; name: string } };
   productName: string;
   productType: string;
   shipment: { status: string; carrier: string | null; trackingRef: string | null } | null;
@@ -96,7 +98,10 @@ export default function GiftDetail() {
       </div>
 
       <TgCard className="space-y-3 p-5">
-        <p className="text-xs uppercase tracking-wider opacity-60">From {gift.from}</p>
+        <p className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wider opacity-60">
+          <span>From {gift.from}</span>
+          {gift.supporter && <SupporterChip supporter={gift.supporter} />}
+        </p>
         <h1 className="font-serif text-3xl">{gift.productName}</h1>
         {gift.message && (
           <blockquote className="glass-subtle rounded-2xl p-3.5 text-sm italic text-ink/85">

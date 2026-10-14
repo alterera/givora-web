@@ -74,6 +74,41 @@ body {
   -webkit-backdrop-filter: blur(14px);
 }
 
+.aura-frame-spark {
+  padding: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.5), rgba(251, 113, 133, 0.35));
+}
+
+.aura-frame-rose {
+  padding: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(251, 113, 133, 0.85), rgba(190, 18, 60, 0.55));
+  box-shadow: 0 0 24px rgba(251, 113, 133, 0.35);
+}
+
+.aura-frame-gold {
+  padding: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.95), rgba(180, 83, 9, 0.65));
+  box-shadow: 0 0 28px rgba(251, 191, 36, 0.3);
+}
+
+.aura-effect-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.12), transparent);
+  animation: aura-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes aura-shimmer {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
