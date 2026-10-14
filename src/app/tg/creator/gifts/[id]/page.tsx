@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ArrowLeft, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { ApiError, idempotencyKey } from "@/lib/api";
 import { tgApi } from "@/lib/tg-api";
+import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { Unwrap } from "@/components/gift-reveal/unwrap";
 import { Field } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
@@ -28,6 +31,7 @@ export default function GiftDetail() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     void tgApi<Gift>(`/api/v1/gifts/${params.id}`).then((row) => {
@@ -43,6 +47,7 @@ export default function GiftDetail() {
 
   async function redeem(event: React.FormEvent) {
     event.preventDefault();
+    setBusy(true);
     try {
       const next = await tgApi<Gift>(`/api/v1/gifts/${params.id}/redeem`, {
         method: "POST",
@@ -50,9 +55,11 @@ export default function GiftDetail() {
         body: JSON.stringify(gift?.productType === "DIGITAL" ? {} : { line1, city, state, postalCode }),
       });
       setGift(next);
-      toast.success(gift?.productType === "DIGITAL" ? "Your file is ready" : "Address saved");
+      toast.success(gift?.productType === "DIGITAL" ? "Your file is ready" : "Delivery address saved");
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : "Could not redeem");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -61,38 +68,88 @@ export default function GiftDetail() {
     window.location.assign(file.url);
   }
 
-  if (!gift) return <p className="p-6">Loading…</p>;
-  if (showUnwrap) return <Unwrap from={gift.from} message={gift.message} product={gift.productName} onDone={() => void opened()} />;
+  if (!gift) {
+    return (
+      <TgPage className="flex min-h-[45dvh] items-center justify-center">
+        <p className="text-sm opacity-70">Loading gift…</p>
+      </TgPage>
+    );
+  }
+
+  if (showUnwrap) {
+    return <Unwrap from={gift.from} message={gift.message} product={gift.productName} onDone={() => void opened()} />;
+  }
+
   return (
-    <div className="px-5 py-8">
-      <p className="text-sm text-gold">{gift.status.replaceAll("_", " ")}</p>
-      <h1 className="font-serif text-4xl">{gift.productName}</h1>
-      <p className="mt-2">From {gift.from}</p>
-      {gift.message && <p className="mt-4 italic">“{gift.message}”</p>}
+    <TgPage className="space-y-5">
+      <div className="flex items-center justify-between">
+        <Link
+          href="/tg/creator/gifts"
+          className="inline-flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/80 px-3.5 py-1.5 text-xs font-medium text-ink/80"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          All gifts
+        </Link>
+        <span className="rounded-full bg-gold/15 px-3 py-1 text-xs font-medium text-gold">
+          {gift.status.replaceAll("_", " ")}
+        </span>
+      </div>
+
+      <TgCard className="space-y-3 p-5">
+        <p className="text-xs uppercase tracking-wider opacity-60">From {gift.from}</p>
+        <h1 className="font-serif text-3xl">{gift.productName}</h1>
+        {gift.message && (
+          <blockquote className="rounded-2xl bg-paper/70 p-3.5 text-sm italic text-ink/85">
+            “{gift.message}”
+          </blockquote>
+        )}
+      </TgCard>
+
       {gift.status === "AWAITING_REDEMPTION" && (
-        <form className="mt-6 space-y-3" onSubmit={redeem}>
-          {gift.productType === "PHYSICAL" && (
-            <>
-              <Field label="Address" value={line1} onChange={(event) => setLine1(event.target.value)} required />
-              <Field label="City" value={city} onChange={(event) => setCity(event.target.value)} required />
-              <Field label="State" value={state} onChange={(event) => setState(event.target.value)} required />
-              <Field label="PIN" value={postalCode} onChange={(event) => setPostalCode(event.target.value)} required />
-            </>
-          )}
-          <Button type="submit">{gift.productType === "DIGITAL" ? "Get the file" : "Redeem gift"}</Button>
-        </form>
+        <TgCard className="p-5">
+          <h2 className="font-serif text-xl">
+            {gift.productType === "DIGITAL" ? "Unlock digital download" : "Where should we ship this?"}
+          </h2>
+          <p className="mt-1 text-xs opacity-70">
+            Your address is only used by Givora fulfilment and is never shared with the fan.
+          </p>
+          <form className="mt-4 space-y-3" onSubmit={redeem}>
+            {gift.productType === "PHYSICAL" && (
+              <>
+                <Field label="Street address" value={line1} onChange={(event) => setLine1(event.target.value)} required />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="City" value={city} onChange={(event) => setCity(event.target.value)} required />
+                  <Field label="State" value={state} onChange={(event) => setState(event.target.value)} required />
+                </div>
+                <Field label="PIN code" value={postalCode} onChange={(event) => setPostalCode(event.target.value)} required />
+              </>
+            )}
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? "Saving…" : gift.productType === "DIGITAL" ? "Get the file" : "Redeem gift"}
+            </Button>
+          </form>
+        </TgCard>
       )}
+
       {gift.productType === "DIGITAL" && gift.status === "FULFILLED" && (
-        <Button type="button" className="mt-6" onClick={() => void download()}>
-          Download
+        <Button type="button" className="w-full" onClick={() => void download()}>
+          Download file
         </Button>
       )}
+
       {gift.shipment && (
-        <p className="mt-4 text-sm">
-          {gift.shipment.status}
-          {gift.shipment.trackingRef ? ` · ${gift.shipment.carrier} ${gift.shipment.trackingRef}` : ""}
-        </p>
+        <TgCard className="flex items-center gap-3 p-4 text-sm">
+          <Truck className="h-5 w-5 text-gold" />
+          <div>
+            <p className="font-medium">Shipment: {gift.shipment.status}</p>
+            {gift.shipment.trackingRef && (
+              <p className="text-xs opacity-75">
+                {gift.shipment.carrier} · {gift.shipment.trackingRef}
+              </p>
+            )}
+          </div>
+        </TgCard>
       )}
-    </div>
+    </TgPage>
   );
 }

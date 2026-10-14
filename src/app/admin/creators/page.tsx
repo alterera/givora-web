@@ -1,20 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CheckCircle2, Copy, ExternalLink, Sparkles, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import { Field } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 
-type Creator = { id: string; displayName: string; slug: string; status: string };
+type Creator = {
+  id: string;
+  displayName: string;
+  slug: string;
+  shortCode: string;
+  status: "PENDING" | "APPROVED" | "SUSPENDED";
+  user?: { telegramUsername?: string | null };
+};
 
 type TelegramUser = {
   id: string;
   displayName: string | null;
   telegramUsername: string | null;
+  telegramId: string | null;
   createdAt: string;
   creatorProfile: { id: string; slug: string; status: string; displayName: string } | null;
 };
+
+function slugify(input: string) {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32);
+}
 
 export default function AdminCreators() {
   const [rows, setRows] = useState<Creator[]>([]);
@@ -32,21 +50,25 @@ export default function AdminCreators() {
   }
 
   useEffect(() => {
-    void load().catch((error) => toast.error(error instanceof ApiError ? error.message : "Admin only"));
+    void load().catch((error) => toast.error(error instanceof ApiError ? error.message : "Sign in as admin first"));
   }, []);
 
   async function promote() {
     if (!promoteUserId || !promoteName.trim() || !promoteSlug.trim()) {
-      toast.error("Pick a Telegram user and fill display name and slug.");
+      toast.error("Select a Telegram user and fill display name and slug.");
       return;
     }
     setBusy(true);
     try {
-      await api(`/api/v1/admin/users/${promoteUserId}/promote`, {
+      const created = await api<{ id: string }>(`/api/v1/admin/users/${promoteUserId}/promote`, {
         method: "POST",
         body: JSON.stringify({ displayName: promoteName.trim(), slug: promoteSlug.trim().toLowerCase() }),
       });
-      toast.success("Creator profile created (pending approval).");
+      await api(`/api/v1/admin/creators/${created.id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "APPROVED" }),
+      });
+      toast.success("User promoted & approved as a live creator!");
       setPromoteUserId("");
       setPromoteName("");
       setPromoteSlug("");
@@ -58,70 +80,180 @@ export default function AdminCreators() {
     }
   }
 
+  async function updateStatus(id: string, status: "APPROVED" | "SUSPENDED" | "PENDING") {
+    try {
+      await api(`/api/v1/admin/creators/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      toast.success(`Creator status set to ${status}`);
+      await load();
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : "Could not update status");
+    }
+  }
+
   const promotable = telegramUsers.filter((user) => !user.creatorProfile);
+  const bot = process.env.NEXT_PUBLIC_TELEGRAM_BOT ?? "GivoraWorldBot";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-12 px-5 py-12">
-      <section>
-        <h1 className="font-serif text-4xl">Promote from Telegram</h1>
-        <p className="mt-2 text-sm opacity-70">Users appear here after they open the Mini App once. Promotion creates a pending creator profile.</p>
-        <div className="mt-6 space-y-3">
-          {promotable.length === 0 && <p className="text-sm opacity-60">No Telegram users waiting for promotion.</p>}
-          {promotable.map((user) => (
-            <button
-              key={user.id}
-              type="button"
-              className={`w-full rounded-3xl p-4 text-left ${promoteUserId === user.id ? "bg-ink text-paper" : "bg-white"}`}
-              onClick={() => {
-                setPromoteUserId(user.id);
-                setPromoteName(user.displayName ?? user.telegramUsername ?? "");
-              }}
-            >
-              <p>{user.displayName ?? "No name"}</p>
-              <p className="text-sm opacity-70">@{user.telegramUsername ?? "no username"}</p>
-            </button>
-          ))}
-        </div>
-        {promoteUserId && (
-          <div className="mt-6 space-y-3 rounded-3xl bg-white p-5">
-            <Field label="Display name" value={promoteName} onChange={(e) => setPromoteName(e.target.value)} />
-            <Field
-              label="Public slug (lowercase, hyphens)"
-              value={promoteSlug}
-              onChange={(e) => setPromoteSlug(e.target.value)}
-            />
-            <Button type="button" disabled={busy} onClick={() => void promote()}>
-              {busy ? "Creating…" : "Create pending creator"}
-            </Button>
+    <div className="grid gap-8 lg:grid-cols-12">
+      <section className="space-y-4 lg:col-span-5">
+        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold">
+            <UserPlus className="h-4 w-4" /> Step 1 · Promote Telegram User
           </div>
-        )}
+          <h1 className="font-serif mt-2 text-2xl">Telegram Users ({promotable.length})</h1>
+          <p className="mt-1 text-xs leading-relaxed text-ink/70">
+            Anyone who opens the GivoraWorld Mini App in Telegram appears here. Select a user to promote and approve them.
+          </p>
+
+          <div className="mt-5 max-h-80 space-y-2 overflow-y-auto pr-1">
+            {promotable.length === 0 ? (
+              <p className="rounded-2xl bg-paper/60 p-4 text-center text-xs text-ink/60">
+                No unpromoted Telegram users right now.
+              </p>
+            ) : (
+              promotable.map((user) => {
+                const selected = promoteUserId === user.id;
+                const defaultName = user.displayName || user.telegramUsername || "Creator";
+                return (
+                  <button
+                    key={user.id}
+                    type="button"
+                    className={`flex w-full items-center justify-between rounded-2xl border p-3.5 text-left transition ${
+                      selected
+                        ? "border-ink bg-ink text-paper"
+                        : "border-ink/10 bg-paper/40 hover:bg-paper"
+                    }`}
+                    onClick={() => {
+                      setPromoteUserId(user.id);
+                      setPromoteName(defaultName);
+                      setPromoteSlug(slugify(user.telegramUsername || defaultName));
+                    }}
+                  >
+                    <div>
+                      <p className="font-medium text-sm">{user.displayName ?? "Telegram User"}</p>
+                      <p className={`text-xs ${selected ? "text-paper/75" : "text-ink/60"}`}>
+                        {user.telegramUsername ? `@${user.telegramUsername}` : `ID ${user.telegramId}`}
+                      </p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-medium ${selected ? "bg-paper text-ink" : "bg-white text-ink"}`}>
+                      {selected ? "Selected" : "Select"}
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          {promoteUserId && (
+            <div className="mt-5 space-y-3 border-t border-ink/10 pt-5">
+              <Field
+                label="Creator display name"
+                value={promoteName}
+                onChange={(e) => {
+                  setPromoteName(e.target.value);
+                  if (!promoteSlug) setPromoteSlug(slugify(e.target.value));
+                }}
+              />
+              <Field
+                label="Public wishlist slug"
+                value={promoteSlug}
+                onChange={(e) => setPromoteSlug(slugify(e.target.value))}
+              />
+              <Button type="button" className="w-full" disabled={busy} onClick={() => void promote()}>
+                {busy ? "Promoting…" : "Promote & Approve Creator"}
+              </Button>
+            </div>
+          )}
+        </div>
       </section>
 
-      <section>
-        <h2 className="font-serif text-3xl">Creator profiles</h2>
-        <div className="mt-6 space-y-3">
-          {rows.map((row) => (
-            <article key={row.id} className="flex items-center justify-between rounded-3xl bg-white p-4">
-              <div>
-                <p>{row.displayName}</p>
-                <p className="text-sm opacity-70">{row.slug} · {row.status}</p>
+      <section className="space-y-4 lg:col-span-7">
+        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold">
+                <Sparkles className="h-4 w-4" /> Step 2 · Active Creators
               </div>
-              {row.status !== "APPROVED" && (
-                <button
-                  type="button"
-                  className="rounded-full bg-ink px-4 py-2 text-paper"
-                  onClick={() =>
-                    void api(`/api/v1/admin/creators/${row.id}/status`, {
-                      method: "PATCH",
-                      body: JSON.stringify({ status: "APPROVED" }),
-                    }).then(load)
-                  }
+              <h2 className="font-serif mt-2 text-2xl">Creator Profiles ({rows.length})</h2>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {rows.map((row) => {
+              const tgLink = `https://t.me/${bot}?startapp=${row.shortCode}`;
+              const isApproved = row.status === "APPROVED";
+              return (
+                <article
+                  key={row.id}
+                  className="flex flex-col justify-between gap-4 rounded-2xl border border-ink/10 bg-paper/35 p-4 sm:flex-row sm:items-center"
                 >
-                  Approve
-                </button>
-              )}
-            </article>
-          ))}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2.5">
+                      <p className="font-serif text-xl">{row.displayName}</p>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${
+                          isApproved
+                            ? "bg-emerald-500/15 text-emerald-800"
+                            : row.status === "SUSPENDED"
+                              ? "bg-rose/15 text-rose"
+                              : "bg-amber-500/15 text-amber-800"
+                        }`}
+                      >
+                        {row.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-ink/70">
+                      Slug: <span className="font-mono font-medium">/{row.slug}</span>
+                      {row.user?.telegramUsername ? ` · @${row.user.telegramUsername}` : ""}
+                    </p>
+                    <p className="font-mono text-xs text-ink/60">{tgLink}</p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3.5 py-1.5 text-xs font-medium text-ink hover:bg-paper"
+                      onClick={() =>
+                        void navigator.clipboard.writeText(tgLink).then(() => toast.success("Telegram link copied"))
+                      }
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      Copy TG Link
+                    </button>
+                    <a
+                      href={`/${row.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-full border border-ink/15 bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-paper"
+                    >
+                      Web <ExternalLink className="h-3 w-3" />
+                    </a>
+                    {!isApproved ? (
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-1.5 text-xs font-medium text-paper"
+                        onClick={() => void updateStatus(row.id, "APPROVED")}
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Approve
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="rounded-full border border-rose/25 bg-rose/10 px-3.5 py-1.5 text-xs font-medium text-rose hover:bg-rose/20"
+                        onClick={() => void updateStatus(row.id, "SUSPENDED")}
+                      >
+                        Suspend
+                      </button>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </section>
     </div>

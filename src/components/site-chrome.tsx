@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 export function SiteHeader() {
   const path = usePathname();
-  if (path.startsWith("/tg") || path.startsWith("/pay/")) return null;
+  if (path.startsWith("/tg") || path.startsWith("/pay/") || path.startsWith("/admin")) return null;
   return (
     <header className="sticky top-0 z-30 border-b border-ink/10 bg-paper/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
@@ -33,7 +33,7 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   const path = usePathname();
-  if (path.startsWith("/tg") || path.startsWith("/pay/")) return null;
+  if (path.startsWith("/tg") || path.startsWith("/pay/") || path.startsWith("/admin")) return null;
   return (
     <footer className="mt-auto border-t border-ink/10">
       <div className="mx-auto flex max-w-6xl flex-wrap gap-4 px-5 py-8 text-sm text-ink/70">

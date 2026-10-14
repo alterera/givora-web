@@ -12,7 +12,7 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/account/gifts";
-  const [mode, setMode] = useState<"password" | "otp">("otp");
+  const [mode, setMode] = useState<"password" | "otp">(next.startsWith("/admin") ? "password" : "otp");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);

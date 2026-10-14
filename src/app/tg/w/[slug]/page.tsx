@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Gift, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { formatInr } from "@/lib/money";
@@ -39,7 +40,9 @@ export default function WishlistPage() {
   const [open, setOpen] = useState<Item | null>(null);
 
   useEffect(() => {
-    void tgApi<Wishlist>(`/api/v1/creators/${params.slug}`).then(setWishlist).catch(() => toast.error("Wishlist unavailable"));
+    void tgApi<Wishlist>(`/api/v1/creators/${params.slug}`)
+      .then(setWishlist)
+      .catch(() => toast.error("Wishlist unavailable"));
   }, [params.slug]);
 
   function giftThis(item: Item) {
@@ -49,40 +52,124 @@ export default function WishlistPage() {
 
   if (!wishlist) {
     return (
-      <TgPage className="flex min-h-[40dvh] items-center justify-center">
+      <TgPage className="flex min-h-[45dvh] items-center justify-center">
         <p className="text-sm opacity-70">Loading wishlist…</p>
       </TgPage>
     );
   }
+
+  const initial = wishlist.displayName.slice(0, 1).toUpperCase();
+
   return (
     <TgPage className="space-y-5">
-      <p className="text-sm uppercase tracking-[0.2em] text-gold">Wishlist of {wishlist.displayName}</p>
-      <h1 className="font-serif text-3xl">Send a gift. Make their day.</h1>
-      <p className="mt-3 text-sm opacity-80">{wishlist.giftNote || wishlist.bio}</p>
-      {wishlist.personaDisclosure && <p className="mt-2 text-xs opacity-60">{wishlist.personaDisclosure}</p>}
-      <div className="mt-6 space-y-3">
-        {wishlist.items.map((item) => (
-          <button key={item.variantId} type="button" className="w-full text-left" onClick={() => setOpen(item)}>
-            <TgCard className="w-full">
-            <p className="text-xs uppercase tracking-widest text-gold">{item.type === "DIGITAL" ? "Digital" : "Physical"}</p>
-            <h2 className="font-serif text-2xl">{item.productName}</h2>
-            <p className="mt-1">{formatInr(item.pricePaise)}</p>
-            {item.lowStock && <p className="text-xs text-rose">Only a few left</p>}
-            {item.available === 0 && <p className="text-xs text-rose">Unavailable</p>}
+      <TgCard className="flex items-center gap-4 p-5">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-ink font-serif text-2xl text-paper">
+          {initial}
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.18em] text-gold">Wishlist</p>
+          <h1 className="font-serif truncate text-2xl">{wishlist.displayName}</h1>
+          <p className="mt-0.5 text-xs leading-relaxed opacity-75">
+            {wishlist.giftNote || wishlist.bio || "Send a gift directly. Delivery details stay private."}
+          </p>
+        </div>
+      </TgCard>
+
+      {wishlist.personaDisclosure && (
+        <p className="px-1 text-xs opacity-60">{wishlist.personaDisclosure}</p>
+      )}
+
+      <div className="space-y-3">
+        {wishlist.items.length === 0 ? (
+          <TgCard className="p-6 text-center text-sm opacity-70">
+            No gifts are listed on this wishlist yet.
+          </TgCard>
+        ) : (
+          wishlist.items.map((item) => (
+            <TgCard key={item.variantId} className="space-y-3 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <button
+                  type="button"
+                  className="text-left"
+                  onClick={() => setOpen(item)}
+                >
+                  <span className="inline-block rounded-full bg-gold/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold">
+                    {item.type === "DIGITAL" ? "Digital" : "Physical Gift"}
+                  </span>
+                  <h2 className="font-serif mt-1.5 text-2xl leading-snug">{item.productName}</h2>
+                  {item.description && (
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed opacity-75">{item.description}</p>
+                  )}
+                </button>
+                <p className="font-serif shrink-0 text-xl font-medium">{formatInr(item.pricePaise)}</p>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={() => setOpen(item)}
+                  className="text-xs font-medium opacity-60 underline"
+                >
+                  Details
+                </button>
+                <button
+                  type="button"
+                  disabled={item.available === 0}
+                  onClick={() => giftThis(item)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-xs font-medium text-paper transition active:scale-95 disabled:opacity-40"
+                >
+                  <Gift className="h-3.5 w-3.5" />
+                  {item.available === 0 ? "Out of stock" : `Gift · ${formatInr(item.pricePaise)}`}
+                </button>
+              </div>
             </TgCard>
-          </button>
-        ))}
+          ))
+        )}
       </div>
+
+      <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs opacity-60">
+        <ShieldCheck className="h-3.5 w-3.5" /> Creator receives the item, never cash. Address stays private.
+      </p>
+
       {open && (
-        <div className="fixed inset-0 z-40 bg-ink/40 p-4" onClick={() => setOpen(null)}>
-          <div className="mt-16 rounded-3xl bg-[var(--tg-secondary-bg-color,#fff)] p-5 text-[var(--tg-text-color,var(--ink))]" onClick={(event) => event.stopPropagation()}>
-            <h2 className="font-serif text-3xl">{open.productName}</h2>
-            <p className="mt-2 text-sm">{open.description}</p>
-            <p className="mt-3">{formatInr(open.pricePaise)} {open.shippingPaise ? `+ ${formatInr(open.shippingPaise)} shipping` : "· shipping free"}</p>
-            <p className="mt-2 text-xs opacity-70">{open.deliveryInfo}</p>
-            <p className="mt-2 text-xs opacity-70">{open.refundTerms}</p>
-            <button type="button" className="mt-4 rounded-full bg-ink px-5 py-3 text-paper" disabled={open.available === 0} onClick={() => giftThis(open)}>
-              Gift this
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-4 sm:items-center" onClick={() => setOpen(null)}>
+          <div
+            className="w-full max-w-md space-y-4 rounded-3xl bg-[var(--tg-secondary-bg-color,#fff)] p-6 text-[var(--tg-text-color,var(--ink))] shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <span className="text-xs uppercase tracking-wider text-gold">
+                  {open.type === "DIGITAL" ? "Digital" : "Physical Gift"}
+                </span>
+                <h2 className="font-serif mt-1 text-2xl">{open.productName}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(null)}
+                className="rounded-full p-1.5 opacity-60 hover:opacity-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-sm leading-relaxed opacity-85">{open.description}</p>
+            <div className="rounded-2xl bg-paper/60 p-3.5 text-xs space-y-1">
+              <p className="font-medium text-sm">
+                {formatInr(open.pricePaise)}{" "}
+                <span className="font-normal opacity-75">
+                  {open.shippingPaise ? `+ ${formatInr(open.shippingPaise)} shipping` : "· Free delivery"}
+                </span>
+              </p>
+              {open.deliveryInfo && <p className="opacity-75">{open.deliveryInfo}</p>}
+              {open.refundTerms && <p className="opacity-75">{open.refundTerms}</p>}
+            </div>
+            <button
+              type="button"
+              className="w-full rounded-full bg-ink px-5 py-3.5 text-sm font-medium text-paper disabled:opacity-40"
+              disabled={open.available === 0}
+              onClick={() => giftThis(open)}
+            >
+              Gift this · {formatInr(open.pricePaise + open.shippingPaise)}
             </button>
           </div>
         </div>
