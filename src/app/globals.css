@@ -26,11 +26,11 @@ html[data-theme="light"] {
   --rose: #be123c;
   --background: transparent;
   --foreground: var(--ink);
-  --glass-bg: rgba(255, 255, 255, 0.62);
-  --glass-bg-strong: rgba(255, 255, 255, 0.84);
-  --glass-subtle: rgba(28, 25, 21, 0.06);
-  --glass-border: rgba(28, 25, 21, 0.14);
-  --glass-shadow: 0 18px 44px rgba(28, 25, 21, 0.12);
+  --glass-bg: rgba(248, 244, 238, 0.38);
+  --glass-bg-strong: rgba(248, 244, 238, 0.52);
+  --glass-subtle: rgba(248, 244, 238, 0.22);
+  --glass-border: rgba(28, 25, 21, 0.12);
+  --glass-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
 }
 
 .admin-shell {
@@ -256,7 +256,7 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-transparent text-foreground;
   }
   html {
     @apply font-sans;

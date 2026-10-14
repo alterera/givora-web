@@ -34,16 +34,14 @@ export function applyDocumentTheme(scheme: "dark" | "light") {
   root.style.colorScheme = scheme;
 }
 
+/** Same veil tint in both Telegram themes — only UI tokens (ink, glass) change. */
+const VEIL_COLOR = "#9d4edd";
+
 export function AppBackground() {
-  const [scheme, setScheme] = useState<"dark" | "light">("dark");
   const [finePointer, setFinePointer] = useState(false);
 
   useEffect(() => {
-    const sync = () => {
-      const next = resolveColorScheme();
-      setScheme(next);
-      applyDocumentTheme(next);
-    };
+    const sync = () => applyDocumentTheme(resolveColorScheme());
     sync();
     setFinePointer(window.matchMedia("(pointer: fine)").matches);
 
@@ -59,19 +57,17 @@ export function AppBackground() {
     };
   }, []);
 
-  const isLight = scheme === "light";
-
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[#0a0810]">
       <DarkVeil
         className="h-full w-full"
-        color={isLight ? "#be123c" : "#9d4edd"}
+        color={VEIL_COLOR}
         speed={0.45}
         scale={1.15}
         flow={1.1}
         warp={0.15}
         variation={2}
-        brightness={isLight ? 0.85 : 1}
+        brightness={1}
         sheen={0.35}
         glow={0.42}
         grain={0.035}
@@ -81,15 +77,9 @@ export function AppBackground() {
         intro
         fade={0.12}
         opacity={1}
-        lightMode={isLight}
+        lightMode={false}
       />
-      <div
-        className={
-          isLight
-            ? "absolute inset-0 bg-gradient-to-b from-white/25 via-transparent to-white/35"
-            : "absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/55"
-        }
-      />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/55" />
     </div>
   );
 }

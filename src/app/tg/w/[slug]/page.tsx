@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { Gift, ShieldCheck, Sparkles, X } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
-import { WishlistWheel } from "@/features/telegram/wishlist-wheel";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { formatInr } from "@/lib/money";
 import { tgApi } from "@/lib/tg-api";
@@ -48,7 +47,6 @@ export default function WishlistPage() {
   } | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [accepting, setAccepting] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     void tgApi<Wishlist>(`/api/v1/creators/${params.slug}`)
@@ -132,13 +130,52 @@ export default function WishlistPage() {
           No gifts are listed on this wishlist yet.
         </TgCard>
       ) : (
-        <WishlistWheel
-          items={wishlist.items}
-          activeIndex={activeIndex}
-          onActiveIndexChange={setActiveIndex}
-          onGift={giftThis}
-          onDetails={setOpen}
-        />
+        <ul className="space-y-3">
+          {wishlist.items.map((item) => (
+            <li key={item.variantId}>
+              <TgCard className="overflow-hidden p-0">
+                <button
+                  type="button"
+                  className="flex w-full gap-3 p-3 text-left sm:gap-4 sm:p-4"
+                  onClick={() => setOpen(item)}
+                >
+                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-ink/10 sm:h-28 sm:w-28">
+                    {item.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-gradient-to-br from-rose/15 to-gold/10">
+                        <Gift className="h-8 w-8 text-gold/70" />
+                      </div>
+                    )}
+                    {item.available === 0 && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-[10px] font-semibold uppercase tracking-wide text-paper">
+                        Sold out
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-gold">
+                      {item.type === "DIGITAL" ? "Digital" : "Physical"}
+                    </span>
+                    <p className="font-serif text-lg leading-snug line-clamp-2">{item.productName}</p>
+                    <p className="text-sm opacity-75">{formatInr(item.pricePaise)}</p>
+                  </div>
+                </button>
+                <div className="border-t border-[var(--glass-border)] px-3 pb-3 pt-2 sm:px-4">
+                  <button
+                    type="button"
+                    className="w-full rounded-full bg-ink py-2.5 text-sm font-medium text-paper disabled:opacity-40"
+                    disabled={item.available === 0}
+                    onClick={() => giftThis(item)}
+                  >
+                    Gift · {formatInr(item.pricePaise + item.shippingPaise)}
+                  </button>
+                </div>
+              </TgCard>
+            </li>
+          ))}
+        </ul>
       )}
 
       <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs opacity-60">

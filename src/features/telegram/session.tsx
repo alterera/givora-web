@@ -44,8 +44,8 @@ export function TelegramSession({ children }: { children: React.ReactNode }) {
           root.style.setProperty(`--tg-${key.replace(/_/g, "-")}`, value);
         }
         try {
-          app.setHeaderColor?.(scheme === "light" ? "#f8f4ee" : "#120f17");
-          app.setBackgroundColor?.(scheme === "light" ? "#f8f4ee" : "#120f17");
+          app.setHeaderColor?.("#0a0810");
+          app.setBackgroundColor?.("#0a0810");
         } catch {
           // Ignore on older Telegram WebApp versions
         }
