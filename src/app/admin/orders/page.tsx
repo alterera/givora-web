@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { MapPin, Package, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
+import { AdminCard } from "@/components/admin/admin-card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Field } from "@/components/ui/field";
 
 type Shipment = {
@@ -76,15 +78,15 @@ export default function AdminShipments() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="glass-card rounded-3xl p-6">
+    <div className="mx-auto max-w-6xl space-y-8">
+      <AdminPageHeader
+        title="Shipments"
+        description="When a creator redeems a physical gift, their private shipping address appears here for dispatch."
+      />
+      <AdminCard className="p-6">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold">
-          <Truck className="h-4 w-4" /> Fulfilment Queue
+          <Truck className="h-4 w-4" /> Fulfilment queue ({rows.length})
         </div>
-        <h1 className="font-serif mt-1 text-2xl">Redeemed Gifts & Shipments ({rows.length})</h1>
-        <p className="mt-1 text-xs text-ink/75">
-          When a creator redeems a physical gift, their private shipping address appears here for dispatch.
-        </p>
 
         <div className="mt-6 space-y-4">
           {rows.length === 0 ? (
@@ -190,7 +192,7 @@ export default function AdminShipments() {
             })
           )}
         </div>
-      </div>
+      </AdminCard>
     </div>
   );
 }

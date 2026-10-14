@@ -6,6 +6,8 @@ import { ImagePlus, Plus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import { formatInr } from "@/lib/money";
+import { AdminCard } from "@/components/admin/admin-card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Button } from "@/components/ui/button";
 import { Field, TextArea } from "@/components/ui/field";
 
@@ -133,9 +135,14 @@ export default function AdminProductsPage() {
   const hasOneRupee = products.some((p) => p.variants.some((v) => v.pricePaise === 100));
 
   return (
-    <div className="grid gap-8 lg:grid-cols-12">
+    <div className="mx-auto max-w-6xl space-y-8">
+      <AdminPageHeader
+        title="Catalogue"
+        description="Create gift products, manage stock, upload images, and quick-add the ₹1 test gift."
+      />
+      <div className="grid gap-8 lg:grid-cols-12">
       <section className="space-y-4 lg:col-span-5">
-        <div className="glass-card rounded-3xl p-6">
+        <AdminCard className="p-6">
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-gold">Catalogue</p>
@@ -202,11 +209,11 @@ export default function AdminProductsPage() {
               {busy ? "Adding…" : `Add product (${formatInr(Math.round((Number(priceRupees) || 0) * 100))})`}
             </Button>
           </form>
-        </div>
+        </AdminCard>
       </section>
 
       <section className="space-y-4 lg:col-span-7">
-        <div className="glass-card rounded-3xl p-6">
+        <AdminCard className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-gold">Inventory</p>
@@ -279,8 +286,9 @@ export default function AdminProductsPage() {
               </article>
             ))}
           </div>
-        </div>
+        </AdminCard>
       </section>
+      </div>
     </div>
   );
 }

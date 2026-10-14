@@ -12,9 +12,12 @@
   "dependencies": {
     "@cashfreepayments/cashfree-js": "^1.0.7",
     "@hookform/resolvers": "^5.9.1",
+    "@radix-ui/react-collapsible": "^1.2.1",
     "@radix-ui/react-dialog": "^1.2.0",
     "@radix-ui/react-label": "^2.1.16",
+    "@radix-ui/react-separator": "^1.2.0",
     "@radix-ui/react-slot": "^1.4.0",
+    "@radix-ui/react-tooltip": "^1.4.1",
     "@tanstack/react-query": "^5.104.1",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",

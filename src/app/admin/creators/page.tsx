@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, Copy, ExternalLink, Sparkles, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
+import { AdminCard } from "@/components/admin/admin-card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Field } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 
@@ -97,9 +99,14 @@ export default function AdminCreators() {
   const bot = process.env.NEXT_PUBLIC_TELEGRAM_BOT ?? "GivoraWorldBot";
 
   return (
-    <div className="grid gap-8 lg:grid-cols-12">
+    <div className="mx-auto max-w-6xl space-y-8">
+      <AdminPageHeader
+        title="Creators & users"
+        description="Promote Telegram Mini App visitors to approved creators and share their wishlist deep links."
+      />
+      <div className="grid gap-8 lg:grid-cols-12">
       <section className="space-y-4 lg:col-span-5">
-        <div className="glass-card rounded-3xl p-6">
+        <AdminCard className="p-6">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold">
             <UserPlus className="h-4 w-4" /> Step 1 · Promote Telegram User
           </div>
@@ -167,11 +174,11 @@ export default function AdminCreators() {
               </Button>
             </div>
           )}
-        </div>
+        </AdminCard>
       </section>
 
       <section className="space-y-4 lg:col-span-7">
-        <div className="glass-card rounded-3xl p-6">
+        <AdminCard className="p-6">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold">
@@ -254,8 +261,9 @@ export default function AdminCreators() {
               );
             })}
           </div>
-        </div>
+        </AdminCard>
       </section>
+      </div>
     </div>
   );
 }
