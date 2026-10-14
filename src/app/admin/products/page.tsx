@@ -135,7 +135,7 @@ export default function AdminProductsPage() {
   return (
     <div className="grid gap-8 lg:grid-cols-12">
       <section className="space-y-4 lg:col-span-5">
-        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+        <div className="glass-card rounded-3xl p-6">
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-gold">Catalogue</p>
@@ -206,7 +206,7 @@ export default function AdminProductsPage() {
       </section>
 
       <section className="space-y-4 lg:col-span-7">
-        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+        <div className="glass-card rounded-3xl p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-gold">Inventory</p>
@@ -216,7 +216,7 @@ export default function AdminProductsPage() {
               type="button"
               disabled={busy}
               onClick={() => void seedOneRupeeProduct()}
-              className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-paper/60 px-3.5 py-2 text-xs font-medium text-ink hover:bg-paper"
+              className="glass-subtle inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-medium text-ink hover:opacity-90"
             >
               <Sparkles className="h-3.5 w-3.5 text-gold" />
               Quick-create ₹1 Gift
@@ -231,17 +231,17 @@ export default function AdminProductsPage() {
             {products.map((product) => (
               <article
                 key={product.id}
-                className="flex flex-col justify-between gap-4 rounded-2xl border border-ink/10 bg-paper/35 p-4 sm:flex-row sm:items-center"
+                className="glass-subtle flex flex-col justify-between gap-4 rounded-2xl p-4 sm:flex-row sm:items-center"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-serif text-xl">{product.name}</h3>
-                    <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-800">
+                    <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300 [html[data-theme=light]_&]:text-emerald-800">
                       {product.status}
                     </span>
                   </div>
                   {product.variants.map((variant) => (
-                    <div key={variant.id} className="flex flex-wrap items-center gap-3 text-xs text-ink/75">
+                    <div key={variant.id} className="flex flex-wrap items-center gap-3 text-xs text-ink/80">
                       <span className="font-semibold text-gold">{formatInr(variant.pricePaise)}</span>
                       <span className="font-mono">{variant.sku}</span>
                       <span>
@@ -249,7 +249,7 @@ export default function AdminProductsPage() {
                       </span>
                       <button
                         type="button"
-                        className="rounded-full border border-ink/15 bg-white px-2.5 py-0.5 font-medium hover:bg-paper"
+                        className="glass-subtle rounded-full px-2.5 py-0.5 font-medium hover:opacity-90"
                         onClick={() =>
                           void api(`/api/v1/admin/variants/${variant.id}/stock`, {
                             method: "PATCH",
@@ -263,7 +263,7 @@ export default function AdminProductsPage() {
                   ))}
                 </div>
 
-                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3.5 py-2 text-xs font-medium text-ink hover:bg-paper">
+                <label className="glass-subtle inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-medium text-ink hover:opacity-90">
                   <ImagePlus className="h-3.5 w-3.5" />
                   Upload photo
                   <input

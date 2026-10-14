@@ -47,7 +47,7 @@ export default async function PublicWishlist({ params }: { params: Promise<{ slu
       </a>
       <div className="mt-10 space-y-4">
         {wishlist.items.map((item) => (
-          <article key={item.variantId} className="rounded-[1.5rem] bg-white p-5">
+          <article key={item.variantId} className="glass-card rounded-[1.5rem] p-5">
             <p className="text-xs uppercase tracking-widest text-gold">{item.type === "DIGITAL" ? "Digital file" : "Ships to the creator"}</p>
             <h2 className="font-serif mt-2 text-2xl">{item.productName}</h2>
             <p className="mt-2 text-sm text-ink/70">{item.description}</p>

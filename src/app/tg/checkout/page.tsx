@@ -161,7 +161,7 @@ function CheckoutBody() {
       <div className="flex items-center justify-between">
         <Link
           href={`/tg/w/${slug}`}
-          className="inline-flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/80 px-3.5 py-1.5 text-xs font-medium text-ink/80 transition hover:bg-white"
+          className="glass-subtle inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium text-ink/85 transition hover:text-ink"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Wishlist
@@ -245,7 +245,7 @@ function CheckoutBody() {
         </Button>
 
         {payCtx && (
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-white/70 px-4 py-3 text-xs">
+          <div className="glass-subtle flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-xs">
             <button
               type="button"
               onClick={openExternal}

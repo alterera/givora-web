@@ -23,7 +23,7 @@ export default function OrdersPage() {
       <h1 className="font-serif text-4xl">Orders</h1>
       <div className="mt-8 space-y-3">
         {orders.map((order) => (
-          <article key={order.id} className="rounded-3xl bg-white p-5">
+          <article key={order.id} className="glass-card rounded-3xl p-5">
             <p className="text-sm text-gold">{order.publicRef}</p>
             <h2 className="text-xl">{order.items.map((item) => item.productName).join(", ")}</h2>
             <p className="text-sm text-ink/60">

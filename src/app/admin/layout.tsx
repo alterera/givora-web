@@ -33,8 +33,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [path]);
 
   return (
-    <div className="min-h-dvh bg-paper text-ink">
-      <header className="sticky top-0 z-30 border-b border-ink/10 bg-white/90 backdrop-blur">
+    <div className="min-h-dvh text-ink">
+      <header className="glass-card-strong sticky top-0 z-30 border-x-0 border-t-0">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4">
           <div className="flex items-center gap-3">
             <Link href="/admin/creators" className="font-serif text-2xl tracking-tight">
@@ -51,7 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   key={item.href}
                   href={item.href}
                   className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
-                    active ? "bg-ink text-paper shadow-sm" : "text-ink/75 hover:bg-ink/5"
+                    active ? "bg-ink text-paper shadow-sm" : "text-ink/80 hover:bg-ink/10"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -61,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
             <Link
               href="/"
-              className="ml-2 inline-flex items-center gap-1 rounded-full border border-ink/15 px-3.5 py-2 text-xs font-medium text-ink/70 hover:bg-ink/5"
+              className="glass-subtle ml-2 inline-flex items-center gap-1 rounded-full px-3.5 py-2 text-xs font-medium text-ink/80 hover:text-ink"
             >
               Storefront <ExternalLink className="h-3 w-3" />
             </Link>
@@ -70,25 +70,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       {stats && (
-        <div className="border-b border-ink/10 bg-white/50">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-5 py-4 sm:grid-cols-4">
-            <div className="rounded-2xl border border-ink/10 bg-white p-3.5">
-              <p className="text-xs uppercase tracking-wider text-ink/60">Paid Revenue</p>
+        <div className="mx-auto max-w-6xl px-5 pt-6">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="glass-card rounded-2xl p-4">
+              <p className="text-xs uppercase tracking-wider text-ink/65">Paid Revenue</p>
               <p className="font-serif mt-1 text-2xl">{formatInr(stats.paidPaise)}</p>
               <p className="text-xs text-ink/60">{stats.paidOrders} paid orders</p>
             </div>
-            <div className="rounded-2xl border border-ink/10 bg-white p-3.5">
-              <p className="text-xs uppercase tracking-wider text-ink/60">Awaiting Redeem</p>
+            <div className="glass-card rounded-2xl p-4">
+              <p className="text-xs uppercase tracking-wider text-ink/65">Awaiting Redeem</p>
               <p className="font-serif mt-1 text-2xl">{stats.giftsAwaitingRedemption}</p>
               <p className="text-xs text-ink/60">Unwrapped / pending address</p>
             </div>
-            <div className="rounded-2xl border border-ink/10 bg-white p-3.5">
-              <p className="text-xs uppercase tracking-wider text-ink/60">In Fulfilment</p>
+            <div className="glass-card rounded-2xl p-4">
+              <p className="text-xs uppercase tracking-wider text-ink/65">In Fulfilment</p>
               <p className="font-serif mt-1 text-2xl">{stats.giftsAwaitingFulfilment}</p>
               <p className="text-xs text-ink/60">Pending pack or transit</p>
             </div>
-            <div className="rounded-2xl border border-ink/10 bg-white p-3.5">
-              <p className="text-xs uppercase tracking-wider text-ink/60">Refunded</p>
+            <div className="glass-card rounded-2xl p-4">
+              <p className="text-xs uppercase tracking-wider text-ink/65">Refunded</p>
               <p className="font-serif mt-1 text-2xl">{formatInr(stats.refundedPaise)}</p>
               <p className="text-xs text-ink/60">{stats.refunds} refunds</p>
             </div>

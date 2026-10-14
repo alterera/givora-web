@@ -99,18 +99,18 @@ export default function AdminCreators() {
   return (
     <div className="grid gap-8 lg:grid-cols-12">
       <section className="space-y-4 lg:col-span-5">
-        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+        <div className="glass-card rounded-3xl p-6">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold">
             <UserPlus className="h-4 w-4" /> Step 1 · Promote Telegram User
           </div>
           <h1 className="font-serif mt-2 text-2xl">Telegram Users ({promotable.length})</h1>
-          <p className="mt-1 text-xs leading-relaxed text-ink/70">
+          <p className="mt-1 text-xs leading-relaxed text-ink/75">
             Anyone who opens the GivoraWorld Mini App in Telegram appears here. Select a user to promote and approve them.
           </p>
 
           <div className="mt-5 max-h-80 space-y-2 overflow-y-auto pr-1">
             {promotable.length === 0 ? (
-              <p className="rounded-2xl bg-paper/60 p-4 text-center text-xs text-ink/60">
+              <p className="glass-subtle rounded-2xl p-4 text-center text-xs text-ink/70">
                 No unpromoted Telegram users right now.
               </p>
             ) : (
@@ -124,7 +124,7 @@ export default function AdminCreators() {
                     className={`flex w-full items-center justify-between rounded-2xl border p-3.5 text-left transition ${
                       selected
                         ? "border-ink bg-ink text-paper"
-                        : "border-ink/10 bg-paper/40 hover:bg-paper"
+                        : "glass-subtle hover:opacity-90"
                     }`}
                     onClick={() => {
                       setPromoteUserId(user.id);
@@ -134,11 +134,11 @@ export default function AdminCreators() {
                   >
                     <div>
                       <p className="font-medium text-sm">{user.displayName ?? "Telegram User"}</p>
-                      <p className={`text-xs ${selected ? "text-paper/75" : "text-ink/60"}`}>
+                      <p className={`text-xs ${selected ? "text-paper/75" : "text-ink/65"}`}>
                         {user.telegramUsername ? `@${user.telegramUsername}` : `ID ${user.telegramId}`}
                       </p>
                     </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-medium ${selected ? "bg-paper text-ink" : "bg-white text-ink"}`}>
+                    <span className={`rounded-full px-3 py-1 text-xs font-medium ${selected ? "bg-paper text-ink" : "glass-subtle text-ink"}`}>
                       {selected ? "Selected" : "Select"}
                     </span>
                   </button>
@@ -171,7 +171,7 @@ export default function AdminCreators() {
       </section>
 
       <section className="space-y-4 lg:col-span-7">
-        <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+        <div className="glass-card rounded-3xl p-6">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold">
@@ -188,7 +188,7 @@ export default function AdminCreators() {
               return (
                 <article
                   key={row.id}
-                  className="flex flex-col justify-between gap-4 rounded-2xl border border-ink/10 bg-paper/35 p-4 sm:flex-row sm:items-center"
+                  className="glass-subtle flex flex-col justify-between gap-4 rounded-2xl p-4 sm:flex-row sm:items-center"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2.5">
@@ -196,26 +196,26 @@ export default function AdminCreators() {
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${
                           isApproved
-                            ? "bg-emerald-500/15 text-emerald-800"
+                            ? "bg-emerald-500/20 text-emerald-300 [html[data-theme=light]_&]:text-emerald-800"
                             : row.status === "SUSPENDED"
-                              ? "bg-rose/15 text-rose"
-                              : "bg-amber-500/15 text-amber-800"
+                              ? "bg-rose/20 text-rose"
+                              : "bg-amber-500/20 text-amber-300 [html[data-theme=light]_&]:text-amber-800"
                         }`}
                       >
                         {row.status}
                       </span>
                     </div>
-                    <p className="text-xs text-ink/70">
+                    <p className="text-xs text-ink/75">
                       Slug: <span className="font-mono font-medium">/{row.slug}</span>
                       {row.user?.telegramUsername ? ` · @${row.user.telegramUsername}` : ""}
                     </p>
-                    <p className="font-mono text-xs text-ink/60">{tgLink}</p>
+                    <p className="font-mono text-xs text-ink/65">{tgLink}</p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3.5 py-1.5 text-xs font-medium text-ink hover:bg-paper"
+                      className="glass-subtle inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium text-ink hover:opacity-90"
                       onClick={() =>
                         void navigator.clipboard.writeText(tgLink).then(() => toast.success("Telegram link copied"))
                       }
@@ -227,7 +227,7 @@ export default function AdminCreators() {
                       href={`/${row.slug}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-full border border-ink/15 bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-paper"
+                      className="glass-subtle inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-ink hover:opacity-90"
                     >
                       Web <ExternalLink className="h-3 w-3" />
                     </a>

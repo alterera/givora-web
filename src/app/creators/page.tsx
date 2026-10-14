@@ -19,7 +19,7 @@ export default async function CreatorsPage() {
       <p className="mt-3 max-w-xl text-ink/70">Each wishlist is the only place a fan can buy a gift for that creator.</p>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {(creators ?? []).map((creator) => (
-          <Link key={creator.slug} href={`/${creator.slug}`} className="rounded-[1.5rem] bg-white p-5">
+          <Link key={creator.slug} href={`/${creator.slug}`} className="glass-card rounded-[1.5rem] p-5 transition hover:opacity-95">
             <p className="text-xs uppercase tracking-widest text-gold">{creator.itemCount} on the list</p>
             <h2 className="font-serif mt-3 text-2xl">{creator.displayName}</h2>
             <p className="mt-2 text-sm text-ink/70">{creator.bio}</p>

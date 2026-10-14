@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Outfit } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
+import { AppBackground } from "@/components/ui/app-background";
 import "./globals.css";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -14,11 +15,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${outfit.variable} ${fraunces.variable} h-full`}>
-      <body className="flex min-h-full flex-col antialiased [html:has([data-tg-shell])_&]:bg-transparent">
+    <html lang="en" data-theme="dark" className={`${outfit.variable} ${fraunces.variable} h-full`}>
+      <body className="relative flex min-h-full flex-col bg-transparent text-ink antialiased">
+        <AppBackground />
         <Providers>
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main className="relative z-10 flex-1">{children}</main>
           <SiteFooter />
         </Providers>
       </body>

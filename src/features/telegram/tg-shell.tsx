@@ -12,9 +12,7 @@ export function TgPage({ children, className = "" }: { children: ReactNode; clas
 
 export function TgCard({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div
-      className={`rounded-3xl border border-[var(--tg-hint-color,rgba(28,25,21,0.08))] bg-[var(--tg-secondary-bg-color,#fff)] p-4 shadow-sm ${className}`}
-    >
+    <div className={`glass-card rounded-3xl p-4 text-ink ${className}`}>
       {children}
     </div>
   );

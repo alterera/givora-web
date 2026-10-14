@@ -77,25 +77,25 @@ export default function AdminShipments() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-ink/10 bg-white p-6 shadow-sm">
+      <div className="glass-card rounded-3xl p-6">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold">
           <Truck className="h-4 w-4" /> Fulfilment Queue
         </div>
         <h1 className="font-serif mt-1 text-2xl">Redeemed Gifts & Shipments ({rows.length})</h1>
-        <p className="mt-1 text-xs text-ink/70">
+        <p className="mt-1 text-xs text-ink/75">
           When a creator redeems a physical gift, their private shipping address appears here for dispatch.
         </p>
 
         <div className="mt-6 space-y-4">
           {rows.length === 0 ? (
-            <p className="rounded-2xl bg-paper/50 p-6 text-center text-sm text-ink/60">
+            <p className="glass-subtle rounded-2xl p-6 text-center text-sm text-ink/70">
               No shipments waiting for fulfilment yet.
             </p>
           ) : (
             rows.map((row) => {
               const draft = drafts[row.id] ?? { carrier: "India Post", tracking: "" };
               return (
-                <article key={row.id} className="space-y-4 rounded-2xl border border-ink/10 bg-paper/35 p-5">
+                <article key={row.id} className="glass-subtle space-y-4 rounded-2xl p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
@@ -142,11 +142,11 @@ export default function AdminShipments() {
                   </div>
 
                   {row.gift.redemption && (
-                    <div className="flex items-start gap-2 rounded-2xl bg-white p-3.5 text-xs">
+                    <div className="glass-subtle flex items-start gap-2 rounded-2xl p-3.5 text-xs">
                       <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
                       <div>
                         <p className="font-medium text-ink">Private Delivery Address</p>
-                        <p className="text-ink/75">
+                        <p className="text-ink/80">
                           {row.gift.redemption.line1}, {row.gift.redemption.city}
                           {row.gift.redemption.state ? `, ${row.gift.redemption.state}` : ""} —{" "}
                           <span className="font-mono">{row.gift.redemption.postalCode}</span>
@@ -179,7 +179,7 @@ export default function AdminShipments() {
                     />
                     <button
                       type="button"
-                      className="self-end rounded-full border border-ink/20 bg-white px-4 py-3 text-xs font-medium hover:bg-paper"
+                      className="glass-subtle self-end rounded-full px-4 py-3 text-xs font-medium hover:opacity-90"
                       onClick={() => void saveTracking(row.id)}
                     >
                       Save tracking

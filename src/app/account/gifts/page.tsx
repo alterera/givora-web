@@ -23,7 +23,7 @@ export default function AccountGiftsPage() {
       <h1 className="font-serif text-4xl">Gifts you sent</h1>
       <div className="mt-8 space-y-4">
         {orders.map((order) => (
-          <article key={order.id} className="rounded-3xl bg-white p-5">
+          <article key={order.id} className="glass-card rounded-3xl p-5">
             <p className="text-sm text-gold">{order.publicRef} · {order.creator.displayName}</p>
             <h2 className="text-xl">{order.items.map((item) => item.productName).join(", ")}</h2>
             <p className="text-sm opacity-70">{order.status} · {order.items.map((item) => item.gift?.status).filter(Boolean).join(", ")}</p>

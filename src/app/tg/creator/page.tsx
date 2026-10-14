@@ -65,7 +65,7 @@ export default function CreatorHome() {
         </span>
         <span
           className={`rounded-full px-3 py-1 text-xs font-medium ${
-            isApproved ? "bg-emerald-500/15 text-emerald-800" : "bg-amber-500/15 text-amber-800"
+            isApproved ? "bg-emerald-500/20 text-emerald-300 [html[data-theme=light]_&]:text-emerald-800" : "bg-amber-500/20 text-amber-300 [html[data-theme=light]_&]:text-amber-800"
           }`}
         >
           {isApproved ? "Approved & Live" : "Pending Approval"}
@@ -86,7 +86,7 @@ export default function CreatorHome() {
           <span className="text-xs font-medium uppercase tracking-wider opacity-60">Your Telegram Wishlist Link</span>
           <span className="text-xs opacity-60">{itemCount} {itemCount === 1 ? "item" : "items"}</span>
         </div>
-        <p className="truncate rounded-2xl bg-paper/70 px-3.5 py-2.5 font-mono text-xs text-ink/90">{telegram}</p>
+        <p className="glass-subtle truncate rounded-2xl px-3.5 py-2.5 font-mono text-xs text-ink/90">{telegram}</p>
         <div className="grid grid-cols-2 gap-2.5">
           <button
             type="button"
@@ -99,7 +99,7 @@ export default function CreatorHome() {
             Copy link
           </button>
           <a
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-ink/15 bg-white px-4 py-2.5 text-xs font-medium text-ink transition hover:bg-paper/50"
+            className="glass-subtle inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-medium text-ink transition hover:opacity-90"
             href={`https://t.me/share/url?url=${encodeURIComponent(telegram)}&text=${encodeURIComponent(`Send me a gift on GivoraWorld ✨`)}`}
           >
             <Share2 className="h-3.5 w-3.5" />

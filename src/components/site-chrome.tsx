@@ -7,22 +7,22 @@ export function SiteHeader() {
   const path = usePathname();
   if (path.startsWith("/tg") || path.startsWith("/pay/") || path.startsWith("/admin")) return null;
   return (
-    <header className="sticky top-0 z-30 border-b border-ink/10 bg-paper/85 backdrop-blur">
+    <header className="glass-card sticky top-0 z-30 border-x-0 border-t-0">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-        <Link href="/" className="font-serif text-2xl tracking-tight">
+        <Link href="/" className="font-serif text-2xl tracking-tight text-ink">
           Givora
         </Link>
-        <nav className="flex items-center gap-5 text-sm">
-          <Link href="/creators" className="hover:text-gold">
+        <nav className="flex items-center gap-5 text-sm text-ink/85">
+          <Link href="/creators" className="transition hover:text-gold">
             Creators
           </Link>
-          <Link href="/account/orders" className="hover:text-gold">
+          <Link href="/account/orders" className="transition hover:text-gold">
             Sent
           </Link>
-          <Link href="/account/wishlist" className="hover:text-gold">
+          <Link href="/account/wishlist" className="transition hover:text-gold">
             My wishlist
           </Link>
-          <Link href="/login" className="rounded-full bg-ink px-4 py-2 text-paper">
+          <Link href="/login" className="rounded-full bg-ink px-4 py-2 font-medium text-paper transition hover:opacity-90">
             Sign in
           </Link>
         </nav>
@@ -35,14 +35,18 @@ export function SiteFooter() {
   const path = usePathname();
   if (path.startsWith("/tg") || path.startsWith("/pay/") || path.startsWith("/admin")) return null;
   return (
-    <footer className="mt-auto border-t border-ink/10">
-      <div className="mx-auto flex max-w-6xl flex-wrap gap-4 px-5 py-8 text-sm text-ink/70">
+    <footer className="glass-subtle mt-auto border-x-0 border-b-0">
+      <div className="mx-auto flex max-w-6xl flex-wrap gap-4 px-5 py-8 text-sm text-ink/75">
         <span>Gifts, not carts.</span>
-        <Link href="/legal/terms">Terms</Link>
-        <Link href="/legal/privacy">Privacy</Link>
-        <Link href="/legal/refunds">Refunds</Link>
-        <Link href="/legal/shipping">Shipping</Link>
-        <Link href="/legal/contact">Contact</Link>
+        <Link href="/legal/privacy" className="hover:text-ink">
+          Privacy
+        </Link>
+        <Link href="/legal/terms" className="hover:text-ink">
+          Terms
+        </Link>
+        <Link href="/legal/refunds" className="hover:text-ink">
+          Refunds
+        </Link>
       </div>
     </footer>
   );

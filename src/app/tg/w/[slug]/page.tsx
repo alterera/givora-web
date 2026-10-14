@@ -132,9 +132,9 @@ export default function WishlistPage() {
       </p>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-4 sm:items-center" onClick={() => setOpen(null)}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center" onClick={() => setOpen(null)}>
           <div
-            className="w-full max-w-md space-y-4 rounded-3xl bg-[var(--tg-secondary-bg-color,#fff)] p-6 text-[var(--tg-text-color,var(--ink))] shadow-xl"
+            className="glass-card-strong w-full max-w-md space-y-4 rounded-3xl p-6 text-ink"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
@@ -153,7 +153,7 @@ export default function WishlistPage() {
               </button>
             </div>
             <p className="text-sm leading-relaxed opacity-85">{open.description}</p>
-            <div className="rounded-2xl bg-paper/60 p-3.5 text-xs space-y-1">
+            <div className="glass-subtle space-y-1 rounded-2xl p-3.5 text-xs">
               <p className="font-medium text-sm">
                 {formatInr(open.pricePaise)}{" "}
                 <span className="font-normal opacity-75">

@@ -33,7 +33,7 @@ export default function GiftInbox() {
       <div className="flex items-center justify-between">
         <Link
           href="/tg/creator"
-          className="inline-flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/80 px-3.5 py-1.5 text-xs font-medium text-ink/80"
+          className="glass-subtle inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium text-ink/85"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Studio

@@ -30,11 +30,11 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
-        <div className="rounded-[2rem] bg-ink p-8 text-paper">
-          <p className="text-sm text-paper/60">How it works</p>
+        <div className="glass-card rounded-[2rem] p-8 text-ink">
+          <p className="text-sm text-gold">How it works</p>
           <ol className="mt-6 space-y-4 text-lg">
             <li>1. The creator shares a wishlist link.</li>
-            <li>2. You pay for one or more gifts.</li>
+            <li>2. You pay for one gift from their list.</li>
             <li>3. They redeem it privately. We ship it.</li>
           </ol>
         </div>
@@ -43,7 +43,7 @@ export default async function HomePage() {
         <h2 className="font-serif text-3xl">Wishlists</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {(creators ?? []).map((creator) => (
-            <Link key={creator.slug} href={`/${creator.slug}`} className="rounded-[1.5rem] border border-ink/10 bg-white p-5">
+            <Link key={creator.slug} href={`/${creator.slug}`} className="glass-card rounded-[1.5rem] p-5 transition hover:opacity-95">
               <p className="text-xs uppercase tracking-widest text-gold">{creator.itemCount} gifts</p>
               <h3 className="font-serif mt-3 text-2xl">{creator.displayName}</h3>
               <p className="mt-2 text-sm text-ink/70">{creator.giftNote || creator.bio}</p>

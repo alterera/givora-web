@@ -35,7 +35,7 @@ export default async function GiftsPage({
       </div>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {(catalogue?.items ?? []).map((product) => (
-          <Link key={product.id} href={`/gifts/${product.slug}`} className="rounded-[1.5rem] bg-white p-5">
+          <Link key={product.id} href={`/gifts/${product.slug}`} className="glass-card rounded-[1.5rem] p-5">
             <div className="mb-4 h-36 rounded-2xl bg-gradient-to-br from-gold/30 to-rose/20" />
             <h2 className="font-serif text-2xl">{product.name}</h2>
             <p className="mt-2 text-sm text-ink/70">{product.story}</p>

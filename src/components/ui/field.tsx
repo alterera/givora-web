@@ -8,10 +8,10 @@ export function Field({
 }: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return (
     <label className="block space-y-2 text-sm">
-      <span className="text-ink/70">{label}</span>
+      <span className="text-ink/80">{label}</span>
       <input
         className={cn(
-          "w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 outline-none ring-gold/40 focus:ring-2",
+          "glass-subtle w-full rounded-2xl px-4 py-3 text-ink placeholder:text-ink/45 outline-none ring-gold/50 transition focus:ring-2",
           className,
         )}
         {...props}
@@ -27,10 +27,10 @@ export function TextArea({
 }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) {
   return (
     <label className="block space-y-2 text-sm">
-      <span className="text-ink/70">{label}</span>
+      <span className="text-ink/80">{label}</span>
       <textarea
         className={cn(
-          "min-h-28 w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 outline-none ring-gold/40 focus:ring-2",
+          "glass-subtle min-h-28 w-full rounded-2xl px-4 py-3 text-ink placeholder:text-ink/45 outline-none ring-gold/50 transition focus:ring-2",
           className,
         )}
         {...props}

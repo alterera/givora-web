@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
+import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 
 export function Unwrap({ from, message, product, onDone }: { from: string; message: string; product: string; onDone: () => void }) {
   const [phase, setPhase] = useState(0);
@@ -13,18 +14,20 @@ export function Unwrap({ from, message, product, onDone }: { from: string; messa
   }, []);
 
   return (
-    <section className="bg-ink px-5 py-12 text-center text-paper">
-      <motion.div className="mx-auto mb-6 h-24 w-36 rounded-2xl bg-gold" animate={{ y: phase > 0 ? -8 : 0 }} />
-      {phase >= 1 && <p className="text-sm uppercase tracking-[0.2em]">From {from}</p>}
-      {phase >= 2 && <h1 className="font-serif mt-4 text-3xl">“{message || "A gift for you"}”</h1>}
-      {phase >= 3 && (
-        <div className="mt-6">
-          <p>{product}</p>
-          <button type="button" className="mt-6 rounded-full bg-paper px-5 py-3 text-ink" onClick={onDone}>
-            Continue
-          </button>
-        </div>
-      )}
-    </section>
+    <TgPage className="flex min-h-[70dvh] items-center justify-center">
+      <TgCard className="w-full p-8 text-center">
+        <motion.div className="mx-auto mb-6 h-24 w-36 rounded-2xl bg-gold shadow-lg" animate={{ y: phase > 0 ? -8 : 0 }} />
+        {phase >= 1 && <p className="text-xs uppercase tracking-[0.2em] text-gold">From {from}</p>}
+        {phase >= 2 && <h1 className="font-serif mt-4 text-3xl">“{message || "A gift for you"}”</h1>}
+        {phase >= 3 && (
+          <div className="mt-6">
+            <p className="font-medium opacity-85">{product}</p>
+            <button type="button" className="mt-6 rounded-full bg-ink px-6 py-3 text-sm font-medium text-paper" onClick={onDone}>
+              Unwrap & Redeem
+            </button>
+          </div>
+        )}
+      </TgCard>
+    </TgPage>
   );
 }

@@ -37,15 +37,15 @@ export function BottomDeck() {
   const items = creator ? creatorItems : fanItems;
 
   return (
-    <nav className="fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex w-[min(92%,24rem)] items-center rounded-full bg-ink p-1.5 text-paper shadow-[0_16px_40px_rgba(28,25,21,0.35)]">
+    <nav className="glass-card-strong fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex w-[min(92%,24rem)] items-center rounded-full p-1.5 text-ink">
       {items.map((item) => {
         const active = item.match(path);
         return (
           <Link
             key={item.href}
             href={item.href}
-            className={`flex-1 rounded-full px-3 py-3 text-center text-sm font-medium transition ${
-              active ? "bg-paper text-ink" : "text-paper/80"
+            className={`flex-1 rounded-full px-3 py-2.5 text-center text-sm font-medium transition ${
+              active ? "bg-ink text-paper shadow-sm" : "text-ink/75 hover:text-ink"
             }`}
           >
             {item.label}

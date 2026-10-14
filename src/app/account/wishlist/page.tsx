@@ -95,7 +95,7 @@ export default function InfluencerWishlist() {
       <h2 className="mt-8 text-xl">On your list</h2>
       <ul className="mt-3 space-y-2">
         {profile.items.map((item) => (
-          <li key={item.wishlistItemId} className="flex items-center justify-between rounded-2xl bg-white p-4">
+          <li key={item.wishlistItemId} className="glass-card flex items-center justify-between rounded-2xl p-4">
             <span>
               {item.productName} · {formatInr(item.pricePaise)}
             </span>
@@ -117,7 +117,7 @@ export default function InfluencerWishlist() {
       <h2 className="mt-10 text-xl">Catalogue</h2>
       <ul className="mt-3 space-y-2">
         {catalogue.map((product) => (
-          <li key={product.name} className="flex items-center justify-between rounded-2xl bg-white p-4">
+          <li key={product.name} className="glass-card flex items-center justify-between rounded-2xl p-4">
             <span>
               {product.name} · {formatInr(product.variants[0]?.pricePaise ?? 0)}
             </span>

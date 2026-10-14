@@ -59,10 +59,12 @@ function CashfreeLauncher() {
 
 export default function CashfreePayPage() {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-paper px-6 text-center text-ink">
-      <Suspense fallback={<p className="text-sm opacity-80">Loading…</p>}>
-        <CashfreeLauncher />
-      </Suspense>
+    <div className="flex min-h-dvh items-center justify-center px-6 text-center text-ink">
+      <div className="glass-card max-w-sm rounded-3xl p-6">
+        <Suspense fallback={<p className="text-sm opacity-80">Loading…</p>}>
+          <CashfreeLauncher />
+        </Suspense>
+      </div>
     </div>
   );
 }
