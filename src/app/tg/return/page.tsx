@@ -11,9 +11,9 @@ import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 function ReturnInner() {
   const params = useSearchParams();
   const orderId = params.get("order_id") ?? params.get("orderId");
-  const [headline, setHeadline] = useState("Waiting for payment");
+  const [headline, setHeadline] = useState("Confirming payment");
   const [detail, setDetail] = useState(
-    "Open your chat with GivoraWorldBot, scan the UPI QR, and pay. This screen updates when Cashfree confirms payment.",
+    "We verify payment with Cashfree. This may take a few seconds after you pay.",
   );
 
   useEffect(() => {
@@ -33,12 +33,12 @@ function ReturnInner() {
           }
           if (result.status === "FAILED") {
             setHeadline("Payment did not go through");
-            setDetail("Request a new QR from checkout or check Sent orders.");
+            setDetail("You can try again from the wishlist checkout.");
             clearInterval(timer);
           }
         })
         .catch(() => {
-          if (attempts > 10) {
+          if (attempts > 12) {
             setDetail("Still waiting for the bank. If you already paid, keep this page open for a minute.");
           }
         });
@@ -62,11 +62,9 @@ function ReturnInner() {
         <h1 className="font-serif mt-2 text-3xl">{headline}</h1>
         <p className="mt-3 text-sm leading-relaxed opacity-80">{detail}</p>
       </div>
-      {headline === "Waiting for payment" && (
+      {headline === "Confirming payment" && (
         <TgCard className="text-left text-sm leading-relaxed opacity-90">
-          <p>1. Switch to the bot chat (latest message has your QR).</p>
-          <p className="mt-2">2. Scan and pay with any UPI app.</p>
-          <p className="mt-2">3. Come back here — we detect payment automatically.</p>
+          <p>If you paid in another browser tab, return to GivoraWorld and we will update this screen automatically.</p>
         </TgCard>
       )}
       <Link className="inline-flex text-sm underline opacity-80" href={`/tg/orders/${orderId}`}>
