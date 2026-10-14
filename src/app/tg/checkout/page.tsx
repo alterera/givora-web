@@ -5,7 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ApiError, idempotencyKey } from "@/lib/api";
-import { tryCashfreeInMiniApp } from "@/lib/cashfree-telegram-checkout";
+import {
+  getCashfree,
+  startInlineCheckout,
+  startModalCheckout,
+  startRedirectCheckout,
+} from "@/lib/cashfree-telegram-checkout";
 import { openCashfreeCheckout } from "@/lib/open-cashfree-checkout";
 import { formatInr } from "@/lib/money";
 import { tgApi } from "@/lib/tg-api";
@@ -48,9 +53,12 @@ function CheckoutBody() {
   const [creatorName, setCreatorName] = useState("");
   const [resolvedCreatorId, setResolvedCreatorId] = useState(creatorId);
   const [payCtx, setPayCtx] = useState<PayContext | null>(null);
-  const [launchCheckout, setLaunchCheckout] = useState(false);
   const [showFallback, setShowFallback] = useState(false);
   const [statusHint, setStatusHint] = useState<string | null>(null);
+
+  useEffect(() => {
+    void getCashfree("production");
+  }, []);
 
   useEffect(() => {
     if (!slug || !variantId) return;
@@ -71,48 +79,74 @@ function CheckoutBody() {
   }, [slug, variantId]);
 
   useEffect(() => {
-    if (!launchCheckout || !payCtx) return;
+    if (!payCtx) return;
     let cancelled = false;
-    const run = async () => {
+
+    const verifyBackendStatus = async () => {
+      try {
+        const result = await tgApi<{ orderStatus: string; status: string }>(
+          `/api/v1/payments/orders/${payCtx.orderId}/status`,
+        );
+        if (cancelled) return;
+        if (result.orderStatus === "CONFIRMED") {
+          setStatusHint("Payment confirmed.");
+          router.replace(`/tg/return?orderId=${payCtx.orderId}`);
+        }
+      } catch {
+        // Ignore transient polling errors while awaiting webhook/bank
+      }
+    };
+
+    const runInline = async () => {
       await new Promise<void>((resolve) => {
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
       });
       if (cancelled) return;
-      const fallbackTimer = window.setTimeout(() => setShowFallback(true), 8_000);
-      const result = await tryCashfreeInMiniApp(payCtx.sessionId, payCtx.mode, inlineRef);
-      window.clearTimeout(fallbackTimer);
-      if (!result.ok) {
+      const container = inlineRef.current;
+      if (!container) {
         setShowFallback(true);
-        setStatusHint("Checkout did not load inside Telegram. Use the secure page below.");
+        setBusy(false);
         return;
       }
-      setStatusHint(
-        result.mode === "inline"
-          ? "Complete payment below. Some UPI apps may open outside Telegram."
-          : "Follow the payment steps on screen.",
-      );
-      setShowFallback(true);
       setBusy(false);
+      setStatusHint("Complete payment below inside the app.");
+      const fallbackTimer = window.setTimeout(() => {
+        if (!cancelled) setShowFallback(true);
+      }, 4000);
+
+      try {
+        const result = await startInlineCheckout(payCtx.sessionId, payCtx.mode, container);
+        window.clearTimeout(fallbackTimer);
+        if (cancelled) return;
+
+        if (result?.error) {
+          setShowFallback(true);
+          setStatusHint("Payment was not completed. You can retry below or open the full-screen checkout.");
+          return;
+        }
+        if (result?.redirect) {
+          return;
+        }
+        if (result?.paymentDetails) {
+          setStatusHint("Verifying payment with server…");
+          await verifyBackendStatus();
+          router.push(`/tg/return?orderId=${payCtx.orderId}`);
+        }
+      } catch {
+        window.clearTimeout(fallbackTimer);
+        if (!cancelled) {
+          setShowFallback(true);
+          setStatusHint("Checkout could not load inline. Tap below to open full-screen payment.");
+        }
+      }
     };
-    void run();
+
+    void runInline();
+    const timer = window.setInterval(() => void verifyBackendStatus(), 4000);
     return () => {
       cancelled = true;
+      window.clearInterval(timer);
     };
-  }, [launchCheckout, payCtx]);
-
-  useEffect(() => {
-    if (!payCtx) return;
-    const timer = window.setInterval(() => {
-      void tgApi<{ orderStatus: string }>(`/api/v1/payments/orders/${payCtx.orderId}/status`)
-        .then((result) => {
-          if (result.orderStatus === "CONFIRMED") {
-            setStatusHint("Payment confirmed.");
-            router.replace(`/tg/return?orderId=${payCtx.orderId}`);
-          }
-        })
-        .catch(() => undefined);
-    }, 3000);
-    return () => window.clearInterval(timer);
   }, [payCtx, router]);
 
   async function pay() {
@@ -123,7 +157,7 @@ function CheckoutBody() {
     }
     setBusy(true);
     setShowFallback(false);
-    setStatusHint(null);
+    setStatusHint("Creating order…");
     try {
       telegramApp()?.requestWriteAccess((granted) => {
         if (granted) void tgApi("/api/v1/me/telegram/write-access", { method: "POST" });
@@ -146,19 +180,40 @@ function CheckoutBody() {
         headers: { "Idempotency-Key": idempotencyKey("pay") },
         body: JSON.stringify({ phone, channel: "telegram" }),
       });
-      const ctx: PayContext = {
+      setPayCtx({
         orderId: order.id,
         sessionId: checkout.checkout.sessionId,
         mode: checkout.checkout.mode,
         hostedUrl: checkout.checkout.hostedUrl,
-      };
-      setPayCtx(ctx);
-      setStatusHint("Opening secure payment…");
-      setLaunchCheckout(true);
+      });
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : "Checkout failed");
-      setShowFallback(true);
+      setStatusHint(null);
       setBusy(false);
+    }
+  }
+
+  async function openInAppModal() {
+    if (!payCtx) return;
+    setStatusHint("Opening payment popup…");
+    const result = await startModalCheckout(payCtx.sessionId, payCtx.mode);
+    if (result?.error) {
+      toast("Payment was not completed.");
+      setStatusHint("Payment was not completed. Try again or open in browser.");
+      return;
+    }
+    if (result?.redirect) return;
+    if (result?.paymentDetails) {
+      router.push(`/tg/return?orderId=${payCtx.orderId}`);
+    }
+  }
+
+  async function openInAppRedirect() {
+    if (!payCtx) return;
+    setStatusHint("Redirecting to Cashfree checkout…");
+    const result = await startRedirectCheckout(payCtx.sessionId, payCtx.mode, "_self");
+    if (result?.error) {
+      openExternal();
     }
   }
 
@@ -226,17 +281,33 @@ function CheckoutBody() {
           <div
             ref={inlineRef}
             id="cf-inline-checkout"
-            className="min-h-[22rem] w-full overflow-hidden rounded-3xl border border-[var(--tg-hint-color,rgba(28,25,21,0.12))] bg-[var(--tg-secondary-bg-color,#fff)]"
+            className="min-h-[40rem] w-full overflow-hidden rounded-3xl border border-[var(--tg-hint-color,rgba(28,25,21,0.12))] bg-white"
           />
-          {(showFallback || statusHint) && (
+          {showFallback && (
             <TgCard className="space-y-3 text-sm">
               <p className="opacity-90">
-                If payment does not appear or UPI does not open, use a secure page outside the Mini App. Your gift stays
-                pending until we confirm payment.
+                Having trouble with the embedded view? Switch to full-screen checkout inside the app or open in your
+                browser for UPI apps.
               </p>
-              <Button type="button" onClick={openExternal}>
-                Open secure payment page
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button type="button" onClick={() => void openInAppRedirect()}>
+                  Open full-screen in app
+                </Button>
+                <button
+                  type="button"
+                  className="w-full rounded-full border border-ink/20 px-4 py-3 text-center text-sm font-medium"
+                  onClick={() => void openInAppModal()}
+                >
+                  Open popup modal
+                </button>
+                <button
+                  type="button"
+                  className="w-full rounded-full border border-ink/20 px-4 py-3 text-center text-sm font-medium"
+                  onClick={openExternal}
+                >
+                  Open in external browser
+                </button>
+              </div>
               <Link className="inline-flex text-sm underline opacity-80" href={`/tg/return?orderId=${payCtx.orderId}`}>
                 View payment status
               </Link>

@@ -10,19 +10,23 @@ import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 
 function ReturnInner() {
   const params = useSearchParams();
-  const orderId = params.get("order_id") ?? params.get("orderId");
+  const initialRef = params.get("orderId") ?? params.get("order_id");
+  const [resolvedOrderId, setResolvedOrderId] = useState<string | null>(params.get("orderId"));
   const [headline, setHeadline] = useState("Confirming payment");
   const [detail, setDetail] = useState(
     "We verify payment with Cashfree. This may take a few seconds after you pay.",
   );
 
   useEffect(() => {
-    if (!orderId) return;
+    if (!initialRef) return;
     let attempts = 0;
-    const timer = setInterval(() => {
+    const poll = () => {
       attempts += 1;
-      void tgApi<{ orderStatus: string; status: string }>(`/api/v1/payments/orders/${orderId}/status`)
+      void tgApi<{ orderId: string; orderStatus: string; status: string }>(
+        `/api/v1/payments/orders/${encodeURIComponent(initialRef)}/status`,
+      )
         .then((result) => {
+          if (result.orderId) setResolvedOrderId(result.orderId);
           if (result.orderStatus === "CONFIRMED") {
             setHeadline("Payment confirmed");
             setDetail("The creator has been notified. Thank you for the gift.");
@@ -38,15 +42,17 @@ function ReturnInner() {
           }
         })
         .catch(() => {
-          if (attempts > 12) {
+          if (attempts > 8) {
             setDetail("Still waiting for the bank. If you already paid, keep this page open for a minute.");
           }
         });
-    }, 2000);
+    };
+    poll();
+    const timer = setInterval(poll, 4000);
     return () => clearInterval(timer);
-  }, [orderId]);
+  }, [initialRef]);
 
-  if (!orderId) {
+  if (!initialRef) {
     return (
       <TgPage className="text-center">
         <h1 className="font-serif text-3xl">No order found</h1>
@@ -54,6 +60,8 @@ function ReturnInner() {
       </TgPage>
     );
   }
+
+  const giftOrderHref = resolvedOrderId ? `/tg/orders/${resolvedOrderId}` : `/tg/orders`;
 
   return (
     <TgPage className="space-y-6 text-center">
@@ -67,7 +75,7 @@ function ReturnInner() {
           <p>If you paid in another browser tab, return to GivoraWorld and we will update this screen automatically.</p>
         </TgCard>
       )}
-      <Link className="inline-flex text-sm underline opacity-80" href={`/tg/orders/${orderId}`}>
+      <Link className="inline-flex text-sm underline opacity-80" href={giftOrderHref}>
         View this gift
       </Link>
     </TgPage>

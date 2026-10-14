@@ -1,42 +1,79 @@
-import type { RefObject } from "react";
+import type { CashfreeInstance, CheckoutResult } from "@cashfreepayments/cashfree-js";
 
 export type CashfreeMode = "sandbox" | "production";
 
-export type CashfreeCheckoutResult =
-  | { ok: true; mode: "inline" | "redirect" | "modal" }
-  | { ok: false; reason: string };
+const sdkInstances = new Map<CashfreeMode, Promise<CashfreeInstance | null>>();
 
-async function loadCashfree(mode: CashfreeMode) {
-  const { load } = await import("@cashfreepayments/cashfree-js");
-  return load({ mode });
+/**
+ * Initialise Cashfree SDK once per mode at module scope (never re-instantiate per click).
+ */
+export function getCashfree(mode: CashfreeMode): Promise<CashfreeInstance | null> {
+  let existing = sdkInstances.get(mode);
+  if (!existing) {
+    existing = import("@cashfreepayments/cashfree-js").then(({ load }) => load({ mode }));
+    sdkInstances.set(mode, existing);
+  }
+  return existing;
 }
 
-/** Start Cashfree inside the Mini App. Inline checkout is fire-and-forget; redirect/modal are attempted on failure. */
-export async function tryCashfreeInMiniApp(
+/**
+ * Mounts Cashfree inline checkout inside a DOM container with 100% mobile-friendly width.
+ * Returns the SDK Promise which resolves when payment completes, redirects, or is closed.
+ */
+export async function startInlineCheckout(
   paymentSessionId: string,
   mode: CashfreeMode,
-  containerRef: RefObject<HTMLElement | null>,
-): Promise<CashfreeCheckoutResult> {
-  const cashfree = await loadCashfree(mode);
-  const container = containerRef.current;
-  if (container) {
-    container.replaceChildren();
-    void cashfree.checkout({ paymentSessionId, redirectTarget: container }).catch(() => undefined);
-    return { ok: true, mode: "inline" };
+  container: HTMLElement,
+): Promise<CheckoutResult | undefined> {
+  const cashfree = await getCashfree(mode);
+  if (!cashfree) {
+    return { error: { code: "sdk_unavailable", message: "Cashfree SDK could not load." } };
   }
+  container.replaceChildren();
+  return cashfree.checkout({
+    paymentSessionId,
+    redirectTarget: container,
+    appearance: {
+      width: "100%",
+      height: "640px",
+    },
+  });
+}
 
-  try {
-    await cashfree.checkout({ paymentSessionId, redirectTarget: "_self" });
-    return { ok: true, mode: "redirect" };
-  } catch {
-    // continue
+/**
+ * Opens Cashfree Drop-in modal overlay inside the current WebView/page.
+ */
+export async function startModalCheckout(
+  paymentSessionId: string,
+  mode: CashfreeMode,
+): Promise<CheckoutResult | undefined> {
+  const cashfree = await getCashfree(mode);
+  if (!cashfree) {
+    return { error: { code: "sdk_unavailable", message: "Cashfree SDK could not load." } };
   }
+  return cashfree.checkout({
+    paymentSessionId,
+    redirectTarget: "_modal",
+  });
+}
 
-  try {
-    await cashfree.checkout({ paymentSessionId, redirectTarget: "_modal" });
-    return { ok: true, mode: "modal" };
-  } catch (error) {
-    const reason = error instanceof Error ? error.message : "Checkout could not open";
-    return { ok: false, reason };
+/**
+ * Navigates the current window directly to Cashfree's hosted checkout page (skips PayFast iframe check on mobile).
+ */
+export async function startRedirectCheckout(
+  paymentSessionId: string,
+  mode: CashfreeMode,
+  target: "_self" | "_top" = "_self",
+): Promise<CheckoutResult | undefined> {
+  const cashfree = await getCashfree(mode);
+  if (!cashfree) {
+    return { error: { code: "sdk_unavailable", message: "Cashfree SDK could not load." } };
   }
+  return cashfree.checkout(
+    {
+      paymentSessionId,
+      redirectTarget: target,
+    },
+    false,
+  );
 }

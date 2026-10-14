@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api, ApiError, idempotencyKey } from "@/lib/api";
+import { getCashfree, startRedirectCheckout } from "@/lib/cashfree-telegram-checkout";
 import { formatInr } from "@/lib/money";
 import { Button } from "@/components/ui/button";
 import { Field, TextArea } from "@/components/ui/field";
@@ -21,6 +22,10 @@ export function CheckoutFlow() {
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    void getCashfree("production");
+  }, []);
 
   async function pay() {
     setBusy(true);
@@ -56,10 +61,17 @@ export function CheckoutFlow() {
           body: JSON.stringify({ phone, channel: "web" }),
         },
       );
-      const { load } = await import("@cashfreepayments/cashfree-js");
-      const cashfree = await load({ mode: checkout.checkout.mode });
-      await cashfree.checkout({ paymentSessionId: checkout.checkout.sessionId, redirectTarget: "_self" });
-      router.push(`/return?orderId=${order.id}`);
+      const result = await startRedirectCheckout(checkout.checkout.sessionId, checkout.checkout.mode, "_self");
+      if (result?.error) {
+        toast("Payment was not completed.");
+        return;
+      }
+      if (result?.redirect) {
+        return;
+      }
+      if (result?.paymentDetails) {
+        router.push(`/return?orderId=${order.id}`);
+      }
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : "Checkout failed");
     } finally {
