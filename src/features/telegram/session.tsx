@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { applyDocumentTheme, resolveColorScheme } from "@/components/ui/app-background";
+import { applyDocumentTheme } from "@/components/ui/app-background";
 import { telegramApp } from "@/features/telegram/webapp";
 import { ensureTelegramSession, type TgAccount } from "@/lib/tg-api";
 
@@ -9,14 +9,12 @@ type SessionState = {
   status: "loading" | "ready" | "outside" | "error";
   account: TgAccount | null;
   photoUrl: string | null;
-  colorScheme: "dark" | "light";
 };
 
 const SessionContext = createContext<SessionState>({
   status: "loading",
   account: null,
   photoUrl: null,
-  colorScheme: "dark",
 });
 
 export function useTelegramSession() {
@@ -28,17 +26,15 @@ export function TelegramSession({ children }: { children: React.ReactNode }) {
     status: "loading",
     account: null,
     photoUrl: null,
-    colorScheme: "dark",
   });
 
   useEffect(() => {
     let cancelled = false;
 
-    const applyTelegramTheme = () => {
+    const applyTelegramChrome = () => {
+      applyDocumentTheme();
       const app = telegramApp();
       const root = document.documentElement;
-      const scheme = resolveColorScheme();
-      applyDocumentTheme(scheme);
       if (app) {
         for (const [key, value] of Object.entries(app.themeParams ?? {})) {
           root.style.setProperty(`--tg-${key.replace(/_/g, "-")}`, value);
@@ -51,14 +47,11 @@ export function TelegramSession({ children }: { children: React.ReactNode }) {
         }
       }
       window.dispatchEvent(new Event("givora-theme-change"));
-      if (!cancelled) {
-        setState((prev) => ({ ...prev, colorScheme: scheme }));
-      }
     };
 
     const boot = async () => {
       const app = telegramApp();
-      applyTelegramTheme();
+      applyTelegramChrome();
       if (!app?.initData) return;
       app.ready();
       app.expand();
@@ -67,14 +60,13 @@ export function TelegramSession({ children }: { children: React.ReactNode }) {
       if (viewport && viewport > 0) {
         root.style.setProperty("--tg-viewport-height", `${viewport}px`);
       }
-      app.onEvent?.("themeChanged", applyTelegramTheme);
+      app.onEvent?.("themeChanged", applyTelegramChrome);
       const account = await ensureTelegramSession();
       if (cancelled) return;
       setState({
         status: account ? "ready" : "error",
         account,
         photoUrl: app.initDataUnsafe?.user?.photo_url ?? null,
-        colorScheme: resolveColorScheme(),
       });
     };
 
@@ -88,7 +80,7 @@ export function TelegramSession({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
       window.clearTimeout(outsideTimer);
-      telegramApp()?.offEvent?.("themeChanged", applyTelegramTheme);
+      telegramApp()?.offEvent?.("themeChanged", applyTelegramChrome);
       window.removeEventListener("tg-sdk-ready", boot);
     };
   }, []);

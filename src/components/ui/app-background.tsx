@@ -1,59 +1,37 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import DarkVeil from "./dark-veil";
 import { telegramApp } from "@/features/telegram/webapp";
+import DarkVeil from "./dark-veil";
 
-function hexLuminance(hex?: string): number | null {
-  if (!hex) return null;
-  const clean = hex.replace("#", "").trim();
-  if (clean.length !== 6) return null;
-  const r = parseInt(clean.slice(0, 2), 16) / 255;
-  const g = parseInt(clean.slice(2, 4), 16) / 255;
-  const b = parseInt(clean.slice(4, 6), 16) / 255;
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-export function resolveColorScheme(): "dark" | "light" {
-  if (typeof window === "undefined") return "dark";
-  const tg = telegramApp();
-  if (tg?.colorScheme === "light" || tg?.colorScheme === "dark") {
-    return tg.colorScheme;
-  }
-  const bgLum = hexLuminance(tg?.themeParams?.bg_color);
-  if (bgLum !== null) {
-    return bgLum > 0.55 ? "light" : "dark";
-  }
-  return "dark";
-}
-
-export function applyDocumentTheme(scheme: "dark" | "light") {
+/** Givora uses one visual theme everywhere (light cream text on purple veil). */
+export function applyDocumentTheme() {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.dataset.theme = scheme;
-  root.style.colorScheme = scheme;
+  root.dataset.theme = "dark";
+  root.style.colorScheme = "dark";
 }
 
-/** Same veil tint in both Telegram themes — only UI tokens (ink, glass) change. */
 const VEIL_COLOR = "#9d4edd";
 
 export function AppBackground() {
   const [finePointer, setFinePointer] = useState(false);
 
   useEffect(() => {
-    const sync = () => applyDocumentTheme(resolveColorScheme());
-    sync();
+    applyDocumentTheme();
     setFinePointer(window.matchMedia("(pointer: fine)").matches);
 
+    const onThemeSignal = () => applyDocumentTheme();
+    window.addEventListener("tg-sdk-ready", onThemeSignal);
+    window.addEventListener("givora-theme-change", onThemeSignal);
+
     const tg = telegramApp();
-    tg?.onEvent?.("themeChanged", sync);
-    window.addEventListener("tg-sdk-ready", sync);
-    window.addEventListener("givora-theme-change", sync);
+    tg?.onEvent?.("themeChanged", onThemeSignal);
 
     return () => {
-      tg?.offEvent?.("themeChanged", sync);
-      window.removeEventListener("tg-sdk-ready", sync);
-      window.removeEventListener("givora-theme-change", sync);
+      window.removeEventListener("tg-sdk-ready", onThemeSignal);
+      window.removeEventListener("givora-theme-change", onThemeSignal);
+      tg?.offEvent?.("themeChanged", onThemeSignal);
     };
   }, []);
 

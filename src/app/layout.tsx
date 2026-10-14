@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={cn("h-full", outfit.variable, fraunces.variable, "font-sans", geist.variable)}>
+    <html lang="en" data-theme="dark" className={cn("dark h-full", outfit.variable, fraunces.variable, "font-sans", geist.variable)}>
       <body className="relative flex min-h-full flex-col bg-transparent text-ink antialiased">
         <AppBackground />
         <Providers>

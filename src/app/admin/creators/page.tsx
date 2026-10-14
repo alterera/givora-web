@@ -203,10 +203,10 @@ export default function AdminCreators() {
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${
                           isApproved
-                            ? "bg-emerald-500/20 text-emerald-300 [html[data-theme=light]_&]:text-emerald-800"
+                            ? "bg-emerald-500/20 text-emerald-300"
                             : row.status === "SUSPENDED"
                               ? "bg-rose/20 text-rose"
-                              : "bg-amber-500/20 text-amber-300 [html[data-theme=light]_&]:text-amber-800"
+                              : "bg-amber-500/20 text-amber-300"
                         }`}
                       >
                         {row.status}

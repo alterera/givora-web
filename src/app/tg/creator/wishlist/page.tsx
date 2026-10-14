@@ -135,7 +135,7 @@ export default function ManageWishlist() {
                 <p className="mt-0.5 text-xs font-medium text-gold">{formatInr(variant.pricePaise)}</p>
               </div>
               {added ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3.5 py-1.5 text-xs font-medium text-emerald-300 [html[data-theme=light]_&]:text-emerald-800">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3.5 py-1.5 text-xs font-medium text-emerald-300">
                   <Check className="h-3.5 w-3.5" /> Added
                 </span>
               ) : (

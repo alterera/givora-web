@@ -65,7 +65,7 @@ export default function CreatorHome() {
         </span>
         <span
           className={`rounded-full px-3 py-1 text-xs font-medium ${
-            isApproved ? "bg-emerald-500/20 text-emerald-300 [html[data-theme=light]_&]:text-emerald-800" : "bg-amber-500/20 text-amber-300 [html[data-theme=light]_&]:text-amber-800"
+            isApproved ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
           }`}
         >
           {isApproved ? "Approved & Live" : "Pending Approval"}
