@@ -2,10 +2,9 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Flame, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Flame, Sparkles, X } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
-import { CircularGallery } from "@/components/ui/circular-gallery";
 import { loadStreak, StreakModal, type StreakStatus } from "@/features/telegram/streak-modal";
 import { useTelegramSession } from "@/features/telegram/session";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
@@ -61,7 +60,6 @@ export default function WishlistPage() {
   } | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [accepting, setAccepting] = useState(false);
-  const [activeItem, setActiveItem] = useState(0);
 
   useEffect(() => {
     void tgApi<Wishlist>(`/api/v1/creators/${params.slug}`)
@@ -136,7 +134,7 @@ export default function WishlistPage() {
   const filled = Math.round(((aura?.progressPercent ?? 0) / 100) * segments);
 
   return (
-    <TgPage className="space-y-5">
+    <TgPage className="flex h-[calc(var(--tg-viewport-height,100dvh)-7.25rem-env(safe-area-inset-bottom))] flex-col gap-3 !pb-1">
       <header className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {photoUrl ? (
@@ -190,51 +188,67 @@ export default function WishlistPage() {
           No gifts are listed on this wishlist yet.
         </TgCard>
       ) : (
-        <section className="-mx-5 space-y-3">
-          <div className="relative h-[340px] w-full">
-            <CircularGallery
-              items={wishlist.items.map((item) => ({
-                image: item.imageUrl || GIFT_PLACEHOLDER,
-                text: item.productName,
-                description: item.description,
-                alt: item.productName,
-              }))}
-              bend={2}
-              itemSize={0.72}
-              itemAspect={0.86}
-              gap={0.18}
-              borderRadius={0.08}
-              wave={0.45}
-              fadeEdges={0.08}
-              shadow={0.35}
-              textColor="#faf5ee"
-              font="600 18px sans-serif"
-              scrollEase={0.08}
-              scrollSpeed={1.6}
-              openOnClick={false}
-              onActiveChange={setActiveItem}
-              onItemClick={(_item, index) => setOpen(wishlist.items[index] ?? null)}
-            />
-          </div>
-          {wishlist.items[activeItem] && (
-            <div className="flex items-center justify-between gap-3 px-5">
-              <p className="font-serif text-2xl">{formatInr(wishlist.items[activeItem].pricePaise)}</p>
-              <button
-                type="button"
-                className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper disabled:opacity-40"
-                disabled={wishlist.items[activeItem].available === 0}
-                onClick={() => giftThis(wishlist.items[activeItem])}
+        <section
+          className="-mx-5 flex min-h-0 flex-1 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          aria-label="Wishlist products"
+        >
+          <div
+            aria-hidden
+            className="shrink-0 snap-none"
+            style={{ width: "calc((100% - (100% - 1.5rem) / 1.4) / 2 - 0.75rem)" }}
+          />
+          {wishlist.items.map((item) => {
+            const soldOut = item.available === 0;
+            return (
+              <article
+                key={item.variantId}
+                className="relative h-full shrink-0 snap-center overflow-hidden rounded-[1.75rem] border border-white/15 bg-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.4)]"
+                style={{ width: "calc((100% - 1.5rem) / 1.4)" }}
               >
-                {wishlist.items[activeItem].available === 0 ? "Sold out" : "Gift this"}
-              </button>
-            </div>
-          )}
+                <button
+                  type="button"
+                  className="absolute inset-0"
+                  onClick={() => setOpen(item)}
+                  aria-label={`Details for ${item.productName}`}
+                >
+                  {item.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={GIFT_PLACEHOLDER} alt="" className="h-full w-full object-cover" />
+                  )}
+                </button>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-3 p-4">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70">
+                      {item.type === "DIGITAL" ? "Digital" : "Physical"}
+                    </p>
+                    <h2 className="font-serif text-2xl leading-tight text-white line-clamp-2">{item.productName}</h2>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-serif text-2xl text-white">{formatInr(item.pricePaise)}</p>
+                    <button
+                      type="button"
+                      disabled={soldOut}
+                      onClick={() => giftThis(item)}
+                      className="pointer-events-auto rounded-full bg-white px-5 py-2.5 text-sm font-medium text-[#141019] disabled:opacity-40"
+                    >
+                      {soldOut ? "Sold out" : "Gift this"}
+                    </button>
+                  </div>
+                </div>
+            </article>
+          );
+          })}
+          <div
+            aria-hidden
+            className="shrink-0 snap-none"
+            style={{ width: "calc((100% - (100% - 1.5rem) / 1.4) / 2 - 0.75rem)" }}
+          />
         </section>
       )}
-
-      <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs opacity-60">
-        <ShieldCheck className="h-3.5 w-3.5" /> Creator receives the item, never cash. Address stays private.
-      </p>
 
       {streakOpen && streak && (
         <StreakModal
