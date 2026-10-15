@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, PackageCheck } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { formatInr } from "@/lib/money";
 import { tgApi } from "@/lib/tg-api";
@@ -33,8 +34,11 @@ export default function OrderDetail() {
 
   if (!order) {
     return (
-      <TgPage className="flex min-h-[40dvh] items-center justify-center">
-        <p className="text-sm opacity-70">Loading gift details…</p>
+      <TgPage className="space-y-4">
+        <Skeleton className="h-8 w-28 rounded-full" />
+        <Skeleton className="h-10 w-40" />
+        <Skeleton className="h-36 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
       </TgPage>
     );
   }

@@ -6,6 +6,7 @@ import { Flame, Sparkles, X } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { CircularGallery } from "@/components/ui/circular-gallery";
+import { Skeleton } from "@/components/ui/skeleton";
 import { loadStreak, StreakModal, type StreakStatus } from "@/features/telegram/streak-modal";
 import { useTelegramSession } from "@/features/telegram/session";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
@@ -123,8 +124,16 @@ export default function WishlistPage() {
 
   if (!wishlist) {
     return (
-      <TgPage className="flex min-h-[45dvh] items-center justify-center">
-        <p className="text-sm opacity-70">Loading wishlist…</p>
+      <TgPage className="flex h-[calc(var(--tg-viewport-height,100dvh)-7.25rem-env(safe-area-inset-bottom))] flex-col gap-3 !pb-1">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-2.5 w-full" />
+          </div>
+          <Skeleton className="h-12 w-12 rounded-2xl" />
+        </div>
+        <Skeleton className="mx-auto mt-2 aspect-[4/5] w-[78%] max-h-full flex-1 rounded-[1.75rem]" />
       </TgPage>
     );
   }
@@ -140,7 +149,7 @@ export default function WishlistPage() {
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={photoUrl} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white/20" />
+            <img src={photoUrl} alt="" decoding="async" className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white/20" />
           ) : (
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-ink text-lg text-paper ring-2 ring-white/15">
               {initial}
@@ -206,8 +215,8 @@ export default function WishlistPage() {
             shadow={0.4}
             showTitles={false}
             textColor="#faf5ee"
-            scrollEase={0.08}
-            scrollSpeed={1.5}
+            scrollEase={0.22}
+            scrollSpeed={1.35}
             openOnClick={false}
             onItemClick={(_item, index) => setOpen(wishlist.items[index] ?? null)}
             renderOverlay={(_item, index) => {
@@ -224,7 +233,7 @@ export default function WishlistPage() {
                       type="button"
                       disabled={soldOut}
                       onClick={() => giftThis(item)}
-                      className="pointer-events-auto w-full rounded-full bg-white/95 py-3 text-sm font-medium text-[#141019] shadow-lg backdrop-blur-md disabled:opacity-40"
+                      className="pointer-events-auto w-full rounded-full border border-white/40 bg-white/20 py-3 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_8px_24px_rgba(0,0,0,0.25)] backdrop-blur-xl [text-shadow:0_1px_2px_rgba(0,0,0,0.55)] disabled:opacity-40"
                     >
                       {soldOut ? "Sold out" : "Gift this"}
                     </button>

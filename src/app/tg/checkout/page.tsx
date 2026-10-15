@@ -14,6 +14,7 @@ import { telegramApp } from "@/features/telegram/webapp";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { Field, TextArea } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type WishlistItem = {
   variantId: string;
@@ -209,7 +210,11 @@ function CheckoutBody() {
           </div>
         </TgCard>
       ) : (
-        <TgCard className="p-6 text-center text-sm opacity-70">Loading gift details…</TgCard>
+        <div className="space-y-3 rounded-[1.75rem] border border-white/10 p-5">
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-full" />
+        </div>
       )}
 
       <TgCard className="space-y-4 p-5">
@@ -275,7 +280,7 @@ function CheckoutBody() {
 
 export default function TelegramCheckout() {
   return (
-    <Suspense fallback={<TgPage><p className="text-sm opacity-70">Loading checkout…</p></TgPage>}>
+    <Suspense fallback={<TgPage className="space-y-3 pt-4"><Skeleton className="h-8 w-24" /><Skeleton className="h-48 w-full rounded-2xl" /></TgPage>}>
       <CheckoutBody />
     </Suspense>
   );

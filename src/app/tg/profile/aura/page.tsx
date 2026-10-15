@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { tgApi } from "@/lib/tg-api";
 
@@ -47,7 +48,11 @@ export default function AuraActivityPage() {
         <h1 className="font-serif text-3xl">Activity</h1>
       </div>
       {loading ? (
-        <p className="text-sm opacity-70">Loading…</p>
+        <div className="space-y-2">
+          <Skeleton className="h-16 w-full rounded-2xl" />
+          <Skeleton className="h-16 w-full rounded-2xl" />
+          <Skeleton className="h-16 w-full rounded-2xl" />
+        </div>
       ) : items.length === 0 ? (
         <TgCard className="p-5 text-sm opacity-75">No Aura activity yet. Accept a creator invite or send a gift to begin.</TgCard>
       ) : (

@@ -3,6 +3,7 @@
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { BottomDeck } from "@/features/telegram/bottom-deck";
+import { SessionLoader } from "@/features/telegram/session-loader";
 import { TelegramSession, useTelegramSession } from "@/features/telegram/session";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 
@@ -11,9 +12,7 @@ function Gate({ children }: { children: React.ReactNode }) {
   if (status === "loading") {
     return (
       <TgPage className="flex min-h-[var(--tg-viewport-height,100dvh)] items-center justify-center">
-        <TgCard className="px-6 py-5 text-center text-sm opacity-85">
-          Signing you in with Telegram…
-        </TgCard>
+        <SessionLoader />
       </TgPage>
     );
   }

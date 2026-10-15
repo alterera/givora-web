@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import { tgApi } from "@/lib/tg-api";
 import { telegramApp } from "@/features/telegram/webapp";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 
 function ReturnInner() {
@@ -84,7 +85,7 @@ function ReturnInner() {
 
 export default function ReturnPage() {
   return (
-    <Suspense fallback={<TgPage><p className="text-center text-sm opacity-70">Loading…</p></TgPage>}>
+    <Suspense fallback={<TgPage className="space-y-3 pt-8"><Skeleton className="mx-auto h-8 w-48" /><Skeleton className="h-24 w-full rounded-2xl" /></TgPage>}>
       <ReturnInner />
     </Suspense>
   );

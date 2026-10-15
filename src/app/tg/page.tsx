@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { telegramApp } from "@/features/telegram/webapp";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { tgApi } from "@/lib/tg-api";
 
@@ -39,8 +40,10 @@ export default function TelegramEntry() {
 
   if (!showAbout) {
     return (
-      <TgPage className="flex min-h-[50dvh] items-center justify-center">
-        <p className="text-center text-sm opacity-70">Loading…</p>
+      <TgPage className="space-y-4 pt-6">
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-28 w-full rounded-2xl" />
       </TgPage>
     );
   }

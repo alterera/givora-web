@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AuraMeter, type AuraSummary } from "@/features/aura/aura-meter";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { ApiError } from "@/lib/api";
@@ -38,6 +39,7 @@ export default function AuraPage() {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [items, setItems] = useState<Cosmetic[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
 
   async function refreshCosmetics() {
     const data = await tgApi<{ items: Cosmetic[] }>("/api/v1/aura/cosmetics");
@@ -45,11 +47,13 @@ export default function AuraPage() {
   }
 
   useEffect(() => {
-    void tgApi<AuraProfile>("/api/v1/me/aura").then(setAura).catch(() => setAura(null));
-    void tgApi<{ items: ActivityItem[] }>("/api/v1/me/aura/activity")
-      .then((page) => setActivity(page.items.slice(0, 6)))
-      .catch(() => setActivity([]));
-    void refreshCosmetics().catch(() => toast.error("Could not load Aura purchases"));
+    void Promise.all([
+      tgApi<AuraProfile>("/api/v1/me/aura").then(setAura).catch(() => setAura(null)),
+      tgApi<{ items: ActivityItem[] }>("/api/v1/me/aura/activity")
+        .then((page) => setActivity(page.items.slice(0, 6)))
+        .catch(() => setActivity([])),
+      refreshCosmetics().catch(() => toast.error("Could not load Aura purchases")),
+    ]).finally(() => setReady(true));
   }, []);
 
   async function buy(item: Cosmetic) {
@@ -98,7 +102,16 @@ export default function AuraPage() {
         <p className="mt-1 text-sm text-ink/65">Rank, activity, and visual purchases live here.</p>
       </div>
 
-      {aura && (
+      {!ready && (
+        <div className="space-y-3">
+          <Skeleton className="h-36 w-full rounded-[1.75rem]" />
+          <Skeleton className="h-20 w-full rounded-2xl" />
+          <Skeleton className="h-20 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+        </div>
+      )}
+
+      {ready && aura && (
         <section className="rounded-[1.75rem] border border-white/12 bg-white/[0.07] p-5 backdrop-blur-2xl">
           <AuraMeter aura={aura} compact />
           {aura.milestones.length > 0 && (
@@ -113,7 +126,7 @@ export default function AuraPage() {
         </section>
       )}
 
-      <section className="space-y-2">
+      {ready && <section className="space-y-2">
         <h2 className="px-1 text-xs uppercase tracking-[0.16em] text-ink/55">Recent activity</h2>
         {activity.length === 0 ? (
           <TgCard className="p-4 text-sm text-ink/70">Send a gift or accept an invite to start earning Aura.</TgCard>
@@ -130,9 +143,9 @@ export default function AuraPage() {
             </TgCard>
           ))
         )}
-      </section>
+      </section>}
 
-      <section className="space-y-3">
+      {ready && <section className="space-y-3">
         <h2 className="px-1 text-xs uppercase tracking-[0.16em] text-ink/55">Purchases</h2>
         {items.map((item) => (
           <TgCard key={item.id} className="space-y-3 p-5">
@@ -172,7 +185,7 @@ export default function AuraPage() {
             )}
           </TgCard>
         ))}
-      </section>
+      </section>}
     </TgPage>
   );
 }

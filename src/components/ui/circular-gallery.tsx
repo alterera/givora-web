@@ -516,9 +516,14 @@ export function CircularGallery({
     let lastItems: GalleryItem[] | null = null;
     let typing = false;
 
-    const textureFor = (url: string): TextureEntry => {
+    const started = new Set<string>();
+    const starters = new Map<string, () => void>();
+    const textureFor = (url: string, eager = true): TextureEntry => {
       const existing = textures.get(url);
-      if (existing) return existing;
+      if (existing) {
+        if (eager) starters.get(url)?.();
+        return existing;
+      }
       const entry: TextureEntry = { texture: null, aspect: 1, ready: 0, loaded: false };
       textures.set(url, entry);
       const image = new Image();
@@ -545,7 +550,16 @@ export function CircularGallery({
         entry.loaded = true;
         wake();
       };
-      image.src = url;
+      const start = () => {
+        if (started.has(url)) return;
+        started.add(url);
+        starters.delete(url);
+        image.src = url;
+      };
+      starters.set(url, start);
+      if (eager) start();
+      else if (typeof requestIdleCallback === 'function') requestIdleCallback(() => start(), { timeout: 900 });
+      else window.setTimeout(start, 180);
       return entry;
     };
 
@@ -555,6 +569,8 @@ export function CircularGallery({
         if (keep.has(url)) return;
         if (entry.texture) gl.deleteTexture(entry.texture);
         textures.delete(url);
+        starters.delete(url);
+        started.delete(url);
       });
     };
 
@@ -826,7 +842,7 @@ export function CircularGallery({
       if (s.items !== lastItems) {
         lastItems = s.items;
         prune(s.items);
-        s.items.forEach(item => textureFor(item.image));
+        s.items.forEach((item, index) => textureFor(item.image, index < 2));
       }
       const idle = now - state.lastInput > 1800;
       const auto =
@@ -983,7 +999,7 @@ export function CircularGallery({
       if (drag && drag.id === event.pointerId) {
         const dx = event.clientX - drag.x0;
         const dy = event.clientY - drag.y0;
-        if (!drag.moved && Math.hypot(dx, dy) > 6) {
+        if (!drag.moved && Math.hypot(dx, dy) > 3) {
           if (Math.abs(dy) > Math.abs(dx) && event.pointerType !== 'mouse') {
             state.drag = null;
             return;
@@ -994,7 +1010,7 @@ export function CircularGallery({
           setPointer(null);
         }
         if (drag.moved) {
-          state.target = drag.start - dx * (settingsRef.current.scrollSpeed / 2);
+          state.target = drag.start - dx * settingsRef.current.scrollSpeed;
           drag.samples.push({ x: event.clientX, t: performance.now() });
           if (drag.samples.length > 6) drag.samples.shift();
           state.lastInput = performance.now();
@@ -1018,7 +1034,7 @@ export function CircularGallery({
           const b = samples[samples.length - 1];
           const span = Math.max(b.t - a.t, 16);
           const speed = ((b.x - a.x) / span) * 1000;
-          state.target -= speed * 0.18 * (settingsRef.current.scrollSpeed / 2);
+          state.target -= speed * 0.42 * settingsRef.current.scrollSpeed;
         }
         snapNow();
         return;
@@ -1135,7 +1151,7 @@ export function CircularGallery({
     document.addEventListener('keydown', onAnyKey, true);
     document.addEventListener('pointerdown', onAnyPointer, true);
     lastItems = settingsRef.current.items;
-    lastItems.forEach(item => textureFor(item.image));
+    lastItems.forEach((item, index) => textureFor(item.image, index < 2));
     resize();
 
     const slotFor = (index: number) => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTelegramSession } from "@/features/telegram/session";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TgPage } from "@/features/telegram/tg-shell";
 import { AuraMeter, type AuraSummary } from "@/features/aura/aura-meter";
 import { tgApi } from "@/lib/tg-api";
@@ -17,9 +18,13 @@ type AuraProfile = AuraSummary & {
 export default function ProfilePage() {
   const { account, photoUrl } = useTelegramSession();
   const [aura, setAura] = useState<AuraProfile | null>(null);
+  const [auraReady, setAuraReady] = useState(false);
 
   useEffect(() => {
-    void tgApi<AuraProfile>("/api/v1/me/aura").then(setAura).catch(() => setAura(null));
+    void tgApi<AuraProfile>("/api/v1/me/aura")
+      .then(setAura)
+      .catch(() => setAura(null))
+      .finally(() => setAuraReady(true));
   }, []);
 
   if (!account) return null;
@@ -40,7 +45,7 @@ export default function ProfilePage() {
           <div className={frameClass || "rounded-full p-[3px] bg-gradient-to-br from-gold/80 to-rose/70"}>
             {photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={photoUrl} alt="" className="h-24 w-24 rounded-full object-cover" />
+              <img src={photoUrl} alt="" decoding="async" className="h-24 w-24 rounded-full object-cover" />
             ) : (
               <div className="grid h-24 w-24 place-items-center rounded-full bg-[#141019] font-serif text-3xl text-ink">
                 {initial}
@@ -57,6 +62,7 @@ export default function ProfilePage() {
         </div>
       </section>
 
+      {!auraReady && <Skeleton className="h-36 w-full rounded-[1.75rem]" />}
       {aura && (
         <section className="rounded-[1.75rem] border border-white/12 bg-white/[0.07] p-5 backdrop-blur-2xl">
           <AuraMeter aura={aura} />

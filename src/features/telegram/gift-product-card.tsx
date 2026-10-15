@@ -30,7 +30,7 @@ export function GiftProductCard({
         <div className="relative overflow-hidden rounded-[1.35rem] bg-black/30">
           {item.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.imageUrl} alt="" className="aspect-[4/5] w-full object-cover" />
+            <img src={item.imageUrl} alt="" loading="lazy" decoding="async" className="aspect-[4/5] w-full object-cover" />
           ) : (
             <div className="flex aspect-[4/5] items-center justify-center bg-gradient-to-br from-white/10 to-white/5">
               <Gift className="h-10 w-10 text-gold/80" />
