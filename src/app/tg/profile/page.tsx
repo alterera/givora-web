@@ -1,31 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTelegramSession } from "@/features/telegram/session";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TgPage } from "@/features/telegram/tg-shell";
-import { AuraMeter, type AuraSummary } from "@/features/aura/aura-meter";
-import { tgApi } from "@/lib/tg-api";
-
-type AuraProfile = AuraSummary & {
-  milestones: Array<{ key: string; label: string; achievedAt: string }>;
-  equipped: {
-    frame: { slug: string; name: string; cssClass: string | null } | null;
-    effect: { slug: string; name: string; cssClass: string | null } | null;
-  } | null;
-};
+import { AuraMeter } from "@/features/aura/aura-meter";
+import { useTgAura } from "@/features/telegram/queries";
 
 export default function ProfilePage() {
   const { account, photoUrl } = useTelegramSession();
-  const [aura, setAura] = useState<AuraProfile | null>(null);
-  const [auraReady, setAuraReady] = useState(false);
-
-  useEffect(() => {
-    void tgApi<AuraProfile>("/api/v1/me/aura")
-      .then(setAura)
-      .catch(() => setAura(null))
-      .finally(() => setAuraReady(true));
-  }, []);
+  const { data: aura, isLoading: auraLoading } = useTgAura();
 
   if (!account) return null;
   const name = account.displayName || "Telegram member";
@@ -62,7 +45,7 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      {!auraReady && <Skeleton className="h-36 w-full rounded-[1.75rem]" />}
+      {auraLoading && <Skeleton className="h-36 w-full rounded-[1.75rem]" />}
       {aura && (
         <section className="rounded-[1.75rem] border border-white/12 bg-white/[0.07] p-5 backdrop-blur-2xl">
           <AuraMeter aura={aura} />

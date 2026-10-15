@@ -4,16 +4,13 @@ import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AuraMeter, type AuraSummary } from "@/features/aura/aura-meter";
+import { AuraMeter } from "@/features/aura/aura-meter";
+import { useTgAura, type AuraProfile } from "@/features/telegram/queries";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
 import { ApiError } from "@/lib/api";
 import { startRedirectCheckout } from "@/lib/cashfree-telegram-checkout";
 import { formatInr } from "@/lib/money";
 import { tgApi } from "@/lib/tg-api";
-
-type AuraProfile = AuraSummary & {
-  milestones: Array<{ key: string; label: string; achievedAt: string }>;
-};
 
 type ActivityItem = {
   id: string;
@@ -35,11 +32,12 @@ type Cosmetic = {
 };
 
 export default function AuraPage() {
-  const [aura, setAura] = useState<AuraProfile | null>(null);
+  const { data: aura, isLoading: auraLoading } = useTgAura();
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [items, setItems] = useState<Cosmetic[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
+  const [extrasReady, setExtrasReady] = useState(false);
+  const ready = !auraLoading && extrasReady;
 
   async function refreshCosmetics() {
     const data = await tgApi<{ items: Cosmetic[] }>("/api/v1/aura/cosmetics");
@@ -48,12 +46,11 @@ export default function AuraPage() {
 
   useEffect(() => {
     void Promise.all([
-      tgApi<AuraProfile>("/api/v1/me/aura").then(setAura).catch(() => setAura(null)),
       tgApi<{ items: ActivityItem[] }>("/api/v1/me/aura/activity")
         .then((page) => setActivity(page.items.slice(0, 6)))
         .catch(() => setActivity([])),
       refreshCosmetics().catch(() => toast.error("Could not load Aura purchases")),
-    ]).finally(() => setReady(true));
+    ]).finally(() => setExtrasReady(true));
   }, []);
 
   async function buy(item: Cosmetic) {

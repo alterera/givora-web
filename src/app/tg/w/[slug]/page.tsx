@@ -2,31 +2,18 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Flame, Sparkles, X } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { CircularGallery } from "@/components/ui/circular-gallery";
 import { Skeleton } from "@/components/ui/skeleton";
-import { loadStreak, StreakModal, type StreakStatus } from "@/features/telegram/streak-modal";
+import { StreakModal, type StreakStatus } from "@/features/telegram/streak-modal";
 import { useTelegramSession } from "@/features/telegram/session";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
-import { type AuraSummary } from "@/features/aura/aura-meter";
 import { formatInr } from "@/lib/money";
 import { tgApi } from "@/lib/tg-api";
-
-type Item = {
-  variantId: string;
-  productName: string;
-  description: string;
-  pricePaise: number;
-  shippingPaise: number;
-  type: string;
-  imageUrl: string | null;
-  available: number | null;
-  lowStock: boolean;
-  deliveryInfo: string | null;
-  refundTerms: string | null;
-};
+import { useTgWishlistBundle, type WishlistBundle, type WishlistItem } from "@/features/telegram/queries";
 
 const GIFT_PLACEHOLDER =
   "data:image/svg+xml," +
@@ -34,58 +21,37 @@ const GIFT_PLACEHOLDER =
     `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000"><rect width="100%" height="100%" fill="#1a1520"/><text x="50%" y="52%" fill="#fbbf24" font-size="42" text-anchor="middle" font-family="sans-serif">Gift</text></svg>`,
   );
 
-type Wishlist = {
-  displayName: string;
-  bio: string;
-  giftNote: string;
-  avatarUrl: string | null;
-  personaDisclosure: string | null;
-  slug: string;
-  id: string;
-  items: Item[];
-};
-
 export default function WishlistPage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { account, photoUrl } = useTelegramSession();
-  const [wishlist, setWishlist] = useState<Wishlist | null>(null);
-  const [aura, setAura] = useState<AuraSummary | null>(null);
-  const [streak, setStreak] = useState<StreakStatus | null>(null);
+  const { data: bundle, isLoading, isError } = useTgWishlistBundle(params.slug);
+  const wishlist = bundle?.wishlist ?? null;
+  const aura = bundle?.aura ?? null;
+  const streak = bundle?.streak ?? null;
+  const invite = bundle?.invite ?? null;
   const [streakOpen, setStreakOpen] = useState(false);
-  const [open, setOpen] = useState<Item | null>(null);
-  const [invite, setInvite] = useState<{
-    eligible: boolean;
-    accepted: boolean;
-    creatorName: string | null;
-    reward: number;
-  } | null>(null);
+  const [open, setOpen] = useState<WishlistItem | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [accepting, setAccepting] = useState(false);
 
   useEffect(() => {
-    void tgApi<Wishlist>(`/api/v1/creators/${params.slug}`)
-      .then(setWishlist)
-      .catch(() => toast.error("Wishlist unavailable"));
-    void tgApi<{
-      eligible: boolean;
-      accepted: boolean;
-      creatorName: string | null;
-      reward: number;
-    }>(`/api/v1/creators/${params.slug}/invite`)
-      .then((status) => {
-        setInvite(status);
-        setInviteOpen(status.eligible && !status.accepted);
-      })
-      .catch(() => setInvite(null));
-    void tgApi<AuraSummary>("/api/v1/me/aura").then(setAura).catch(() => setAura(null));
-    void loadStreak(params.slug).then(setStreak).catch(() => setStreak(null));
+    if (invite?.eligible && !invite.accepted) setInviteOpen(true);
+  }, [invite?.eligible, invite?.accepted]);
 
+  useEffect(() => {
+    if (isError) toast.error("Wishlist unavailable");
+  }, [isError]);
+
+  useEffect(() => {
     const purchaseId = new URLSearchParams(window.location.search).get("streakPurchase");
     if (purchaseId) {
       void tgApi<{ status: string; streak: StreakStatus }>(`/api/v1/streak/purchases/${purchaseId}/status`)
         .then((result) => {
-          setStreak(result.streak);
+          queryClient.setQueryData<WishlistBundle>(["tg-wishlist", params.slug], (prev) =>
+            prev ? { ...prev, streak: result.streak } : prev,
+          );
           setStreakOpen(true);
           if (result.status === "PAID") toast.success("Streak day secured");
           const url = new URL(window.location.href);
@@ -95,20 +61,20 @@ export default function WishlistPage() {
         })
         .catch(() => toast.error("Could not confirm streak payment"));
     }
-  }, [params.slug]);
+  }, [params.slug, queryClient]);
 
   async function acceptInvite() {
     setAccepting(true);
     try {
       const result = await tgApi<{ alreadyAccepted: boolean; awarded: number }>(
-        `/api/v1/creators/${params.slug}/invite/accept`,
+        `/api/v1/creators/${wishlist?.slug ?? params.slug}/invite/accept`,
         { method: "POST", body: "{}" },
       );
       if (result.awarded > 0) {
         toast.success(`+${result.awarded} Aura`);
         void confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
       }
-      setInvite((prev) => (prev ? { ...prev, accepted: true } : prev));
+      void queryClient.invalidateQueries({ queryKey: ["tg-wishlist", params.slug] });
       setInviteOpen(false);
     } catch {
       toast.error("Could not accept invitation");
@@ -117,12 +83,12 @@ export default function WishlistPage() {
     }
   }
 
-  function giftThis(item: Item) {
+  function giftThis(item: WishlistItem) {
     if (!wishlist || item.available === 0) return;
     router.push(`/tg/checkout?creator=${wishlist.id}&variant=${item.variantId}&slug=${wishlist.slug}`);
   }
 
-  if (!wishlist) {
+  if (isLoading || !wishlist) {
     return (
       <TgPage className="flex h-[calc(var(--tg-viewport-height,100dvh)-7.25rem-env(safe-area-inset-bottom))] flex-col gap-3 !pb-1">
         <div className="flex items-center gap-3">

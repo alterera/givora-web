@@ -9,6 +9,8 @@ import { ApiError, idempotencyKey } from "@/lib/api";
 import { getCashfree, startRedirectCheckout } from "@/lib/cashfree-telegram-checkout";
 import { openCashfreeCheckout } from "@/lib/open-cashfree-checkout";
 import { formatInr } from "@/lib/money";
+import { useQueryClient } from "@tanstack/react-query";
+import { findWishlistItem, type WishlistBundle } from "@/features/telegram/queries";
 import { tgApi } from "@/lib/tg-api";
 import { telegramApp } from "@/features/telegram/webapp";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
@@ -16,7 +18,7 @@ import { Field, TextArea } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type WishlistItem = {
+type CheckoutLine = {
   variantId: string;
   productName: string;
   description?: string;
@@ -24,13 +26,6 @@ type WishlistItem = {
   shippingPaise: number;
   imageUrl?: string | null;
   type?: string;
-};
-
-type Wishlist = {
-  id: string;
-  displayName: string;
-  slug: string;
-  items: WishlistItem[];
 };
 
 type PayContext = {
@@ -42,6 +37,7 @@ type PayContext = {
 
 function CheckoutBody() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const search = useSearchParams();
   const creatorId = search.get("creator") ?? "";
   const variantId = search.get("variant") ?? "";
@@ -49,7 +45,7 @@ function CheckoutBody() {
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
-  const [line, setLine] = useState<WishlistItem | null>(null);
+  const [line, setLine] = useState<CheckoutLine | null>(null);
   const [creatorName, setCreatorName] = useState("");
   const [resolvedCreatorId, setResolvedCreatorId] = useState(creatorId);
   const [payCtx, setPayCtx] = useState<PayContext | null>(null);
@@ -60,17 +56,25 @@ function CheckoutBody() {
 
   useEffect(() => {
     if (!slug || !variantId) return;
-    void tgApi<Wishlist>(`/api/v1/creators/${slug}`).then((wishlist) => {
-      const item = wishlist.items.find((i) => i.variantId === variantId);
+    const cachedItem = findWishlistItem(slug, variantId, queryClient);
+    const bundle = queryClient.getQueryData<WishlistBundle>(["tg-wishlist", slug]);
+    if (cachedItem && bundle) {
+      setResolvedCreatorId(bundle.wishlist.id);
+      setCreatorName(bundle.wishlist.displayName);
+      setLine(cachedItem);
+      return;
+    }
+    void tgApi<WishlistBundle>(`/api/v1/tg/wishlist/${encodeURIComponent(slug)}`).then((fresh) => {
+      const item = fresh.wishlist.items.find((i) => i.variantId === variantId);
       if (!item) {
         toast.error("This gift is no longer on the wishlist.");
         return;
       }
-      setResolvedCreatorId(wishlist.id);
-      setCreatorName(wishlist.displayName);
+      setResolvedCreatorId(fresh.wishlist.id);
+      setCreatorName(fresh.wishlist.displayName);
       setLine(item);
     });
-  }, [slug, variantId]);
+  }, [slug, variantId, queryClient]);
 
   async function launchFullScreen(ctx: PayContext) {
     const result = await startRedirectCheckout(ctx.sessionId, ctx.mode, "_self");

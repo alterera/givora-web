@@ -49,7 +49,8 @@ export function AppBackground() {
         sheen={0.35}
         glow={0.42}
         grain={0.035}
-        quality={0.55}
+        quality={finePointer ? 0.55 : 0.38}
+        dpr={finePointer ? undefined : 1}
         mouseInteraction={finePointer}
         mouseStrength={0.85}
         intro

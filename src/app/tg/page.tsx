@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { telegramApp } from "@/features/telegram/webapp";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
-import { tgApi } from "@/lib/tg-api";
+import { useTelegramSession } from "@/features/telegram/session";
 
 function startParam() {
   const fromLink = new URLSearchParams(window.location.search).get("start");
@@ -15,14 +15,13 @@ function startParam() {
 
 export default function TelegramEntry() {
   const router = useRouter();
+  const { isCreator, status } = useTelegramSession();
   const [showAbout, setShowAbout] = useState(false);
 
   useEffect(() => {
     const param = startParam();
     if (param.startsWith("c_")) {
-      void tgApi<{ slug: string }>(`/api/v1/creators/by-code/${param}`).then((creator) =>
-        router.replace(`/tg/w/${creator.slug}`),
-      );
+      router.replace(`/tg/w/${param}`);
       return;
     }
     if (param.startsWith("g_")) {
@@ -33,10 +32,11 @@ export default function TelegramEntry() {
       router.replace(`/tg/orders/${param.slice(2)}`);
       return;
     }
-    void tgApi<{ slug: string }>("/api/v1/creators/me")
-      .then(() => router.replace("/tg/creator"))
-      .catch(() => setShowAbout(true));
-  }, [router]);
+    if (status === "ready") {
+      if (isCreator) router.replace("/tg/creator");
+      else setShowAbout(true);
+    }
+  }, [router, isCreator, status]);
 
   if (!showAbout) {
     return (

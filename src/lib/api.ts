@@ -30,7 +30,9 @@ async function refreshSession() {
 export async function api<T>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("X-Requested-With", "givora");
-  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  if (init.body && !headers.has("Content-Type") && !(init.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
   const response = await fetch(`${apiBase()}${path}`, {
     ...init,
     headers,

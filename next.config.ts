@@ -1,10 +1,17 @@
 import type { NextConfig } from "next";
 
+const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
 const nextConfig: NextConfig = {
-  experimental: {
-    agentFeedback: true,
-  },
   cacheComponents: false,
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${apiOrigin}/api/v1/:path*`,
+      },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

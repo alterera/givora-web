@@ -1,13 +1,14 @@
 import { api } from "@/lib/api";
 
 export async function uploadProductImage(productId: string, file: File) {
-  const presign = await api<{ uploadUrl: string; publicUrl: string }>("/api/v1/admin/media/presign", {
+  const form = new FormData();
+  form.append("file", file);
+  const uploaded = await api<{ publicUrl: string }>("/api/v1/admin/media/upload-image", {
     method: "POST",
-    body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+    body: form,
   });
-  await fetch(presign.uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
   return api<{ id: string; url: string }>(`/api/v1/admin/products/${productId}/images`, {
     method: "POST",
-    body: JSON.stringify({ url: presign.publicUrl, alt: file.name }),
+    body: JSON.stringify({ url: uploaded.publicUrl, alt: file.name }),
   });
 }

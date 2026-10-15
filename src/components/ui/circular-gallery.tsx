@@ -406,6 +406,10 @@ export function CircularGallery({
   settingsRef.current = settings;
 
   useEffect(() => {
+    if (!showTitles) {
+      fontRef.current = font;
+      return;
+    }
     let alive = true;
     fontRef.current = font;
     resolveFont(font, fontUrl).then(resolved => {
@@ -416,7 +420,7 @@ export function CircularGallery({
     return () => {
       alive = false;
     };
-  }, [font, fontUrl]);
+  }, [font, fontUrl, showTitles]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -561,6 +565,15 @@ export function CircularGallery({
       else if (typeof requestIdleCallback === 'function') requestIdleCallback(() => start(), { timeout: 900 });
       else window.setTimeout(start, 180);
       return entry;
+    };
+
+    const preloadNeighbors = (activeIndex: number) => {
+      const s = settingsRef.current;
+      if (!s.items.length) return;
+      for (let offset = -1; offset <= 1; offset += 1) {
+        const item = s.items[wrap(activeIndex + offset, s.items.length)];
+        textureFor(item.image, true);
+      }
     };
 
     const prune = (nextList: GalleryItem[]) => {
@@ -842,7 +855,8 @@ export function CircularGallery({
       if (s.items !== lastItems) {
         lastItems = s.items;
         prune(s.items);
-        s.items.forEach((item, index) => textureFor(item.image, index < 2));
+        if (s.items[0]) textureFor(s.items[0].image, true);
+        preloadNeighbors(wrap(state.active, s.items.length));
       }
       const idle = now - state.lastInput > 1800;
       const auto =
@@ -903,6 +917,7 @@ export function CircularGallery({
         const index = wrap(slot, s.items.length);
         setActive(index);
         s.onActiveChange?.(index);
+        preloadNeighbors(index);
       }
       const metrics = layout();
       draw(metrics);
@@ -1151,7 +1166,8 @@ export function CircularGallery({
     document.addEventListener('keydown', onAnyKey, true);
     document.addEventListener('pointerdown', onAnyPointer, true);
     lastItems = settingsRef.current.items;
-    lastItems.forEach((item, index) => textureFor(item.image, index < 2));
+    if (lastItems[0]) textureFor(lastItems[0].image, true);
+    preloadNeighbors(0);
     resize();
 
     const slotFor = (index: number) => {

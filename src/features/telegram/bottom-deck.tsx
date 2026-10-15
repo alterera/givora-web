@@ -1,11 +1,9 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { Gift, House, Inbox, LayoutDashboard, Send, Sparkles, UserRound } from "lucide-react";
 import { Dock, type DockItem } from "@/components/arc/dock/dock";
 import { useTelegramSession } from "@/features/telegram/session";
-import { tgApi } from "@/lib/tg-api";
 
 const fanItems: DockItem[] = [
   { id: "/tg", label: "Home", icon: <House /> },
@@ -31,22 +29,14 @@ function selectedId(path: string, items: DockItem[]) {
 }
 
 export function BottomDeck() {
-  const { status } = useTelegramSession();
+  const { status, isCreator } = useTelegramSession();
   const path = usePathname();
   const router = useRouter();
-  const [creator, setCreator] = useState(false);
-
-  useEffect(() => {
-    if (status !== "ready") return;
-    void tgApi<{ slug: string }>("/api/v1/creators/me")
-      .then(() => setCreator(true))
-      .catch(() => setCreator(false));
-  }, [status]);
 
   if (status !== "ready") return null;
   if (path.startsWith("/tg/checkout") || path.startsWith("/tg/return") || path.startsWith("/pay/")) return null;
 
-  const items = creator ? creatorItems : fanItems;
+  const items = isCreator ? creatorItems : fanItems;
 
   return (
     <div className="fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-3">
