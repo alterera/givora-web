@@ -1,27 +1,34 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Gift, House, Inbox, LayoutDashboard, Send, UserRound } from "lucide-react";
+import { Dock, type DockItem } from "@/components/arc/dock/dock";
 import { useTelegramSession } from "@/features/telegram/session";
 import { tgApi } from "@/lib/tg-api";
 
-const fanItems = [
-  { href: "/tg", label: "Home", match: (path: string) => path === "/tg" },
-  { href: "/tg/orders", label: "Sent", match: (path: string) => path.startsWith("/tg/orders") },
-  { href: "/tg/profile", label: "Profile", match: (path: string) => path.startsWith("/tg/profile") },
+const fanItems: DockItem[] = [
+  { id: "/tg", label: "Home", icon: <House /> },
+  { id: "/tg/orders", label: "Sent", icon: <Send /> },
+  { id: "/tg/profile", label: "Profile", icon: <UserRound /> },
 ];
 
-const creatorItems = [
-  { href: "/tg/creator", label: "Studio", match: (path: string) => path === "/tg/creator" },
-  { href: "/tg/creator/wishlist", label: "Wishlist", match: (path: string) => path.startsWith("/tg/creator/wishlist") },
-  { href: "/tg/creator/gifts", label: "Gifts", match: (path: string) => path.startsWith("/tg/creator/gifts") },
-  { href: "/tg/profile", label: "Profile", match: (path: string) => path.startsWith("/tg/profile") },
+const creatorItems: DockItem[] = [
+  { id: "/tg/creator", label: "Studio", icon: <LayoutDashboard /> },
+  { id: "/tg/creator/wishlist", label: "Wishlist", icon: <Gift /> },
+  { id: "/tg/creator/gifts", label: "Gifts", icon: <Inbox /> },
+  { id: "/tg/profile", label: "Profile", icon: <UserRound /> },
 ];
+
+function selectedId(path: string, items: DockItem[]) {
+  const match = items.find((item) => (item.id === "/tg" ? path === "/tg" : path.startsWith(item.id)));
+  return match?.id ?? items[0]?.id ?? null;
+}
 
 export function BottomDeck() {
   const { status } = useTelegramSession();
   const path = usePathname();
+  const router = useRouter();
   const [creator, setCreator] = useState(false);
 
   useEffect(() => {
@@ -37,21 +44,13 @@ export function BottomDeck() {
   const items = creator ? creatorItems : fanItems;
 
   return (
-    <nav className="glass-card-strong fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex w-[min(92%,24rem)] items-center rounded-full p-1.5 text-ink">
-      {items.map((item) => {
-        const active = item.match(path);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex-1 rounded-full px-3 py-2.5 text-center text-sm font-medium transition ${
-              active ? "bg-ink text-paper shadow-sm" : "text-ink/75 hover:text-ink"
-            }`}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
-    </nav>
+    <div className="fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-3">
+      <Dock
+        label="Givora"
+        items={items}
+        value={selectedId(path, items)}
+        onValueChange={(id) => router.push(id)}
+      />
+    </div>
   );
 }

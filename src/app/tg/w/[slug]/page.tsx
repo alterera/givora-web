@@ -2,10 +2,14 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Gift, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Flame, ShieldCheck, Sparkles, X } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
+import { GiftProductCard } from "@/features/telegram/gift-product-card";
+import { loadStreak, StreakModal, type StreakStatus } from "@/features/telegram/streak-modal";
+import { useTelegramSession } from "@/features/telegram/session";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
+import { type AuraSummary } from "@/features/aura/aura-meter";
 import { formatInr } from "@/lib/money";
 import { tgApi } from "@/lib/tg-api";
 
@@ -37,7 +41,11 @@ type Wishlist = {
 export default function WishlistPage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
+  const { account, photoUrl } = useTelegramSession();
   const [wishlist, setWishlist] = useState<Wishlist | null>(null);
+  const [aura, setAura] = useState<AuraSummary | null>(null);
+  const [streak, setStreak] = useState<StreakStatus | null>(null);
+  const [streakOpen, setStreakOpen] = useState(false);
   const [open, setOpen] = useState<Item | null>(null);
   const [invite, setInvite] = useState<{
     eligible: boolean;
@@ -63,6 +71,23 @@ export default function WishlistPage() {
         setInviteOpen(status.eligible && !status.accepted);
       })
       .catch(() => setInvite(null));
+    void tgApi<AuraSummary>("/api/v1/me/aura").then(setAura).catch(() => setAura(null));
+    void loadStreak(params.slug).then(setStreak).catch(() => setStreak(null));
+
+    const purchaseId = new URLSearchParams(window.location.search).get("streakPurchase");
+    if (purchaseId) {
+      void tgApi<{ status: string; streak: StreakStatus }>(`/api/v1/streak/purchases/${purchaseId}/status`)
+        .then((result) => {
+          setStreak(result.streak);
+          setStreakOpen(true);
+          if (result.status === "PAID") toast.success("Streak day secured");
+          const url = new URL(window.location.href);
+          url.searchParams.delete("streakPurchase");
+          url.searchParams.delete("order_id");
+          window.history.replaceState({}, "", url.pathname);
+        })
+        .catch(() => toast.error("Could not confirm streak payment"));
+    }
   }, [params.slug]);
 
   async function acceptInvite() {
@@ -98,22 +123,50 @@ export default function WishlistPage() {
     );
   }
 
-  const initial = wishlist.displayName.slice(0, 1).toUpperCase();
+  const firstName = (account?.displayName || "there").split(" ")[0] ?? "there";
+  const initial = firstName.slice(0, 1).toUpperCase();
+  const segments = 10;
+  const filled = Math.round(((aura?.progressPercent ?? 0) / 100) * segments);
 
   return (
     <TgPage className="space-y-5">
-      <TgCard className="flex items-center gap-4 p-5">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-ink font-serif text-2xl text-paper">
-          {initial}
+      <header className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photoUrl} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white/20" />
+          ) : (
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-ink text-lg text-paper ring-2 ring-white/15">
+              {initial}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="font-serif text-xl leading-none">Hi, {firstName}</p>
+            <div className="mt-2 flex gap-1" aria-hidden>
+              {Array.from({ length: segments }, (_, index) => (
+                <span
+                  key={index}
+                  className={`h-2.5 flex-1 rounded-[3px] ${index < filled ? "bg-gold" : "bg-white/12"}`}
+                />
+              ))}
+            </div>
+            {aura && <p className="sr-only">{aura.earnedAura} Aura, {aura.progressPercent}% to next tier</p>}
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.18em] text-gold">Wishlist</p>
-          <h1 className="font-serif truncate text-2xl">{wishlist.displayName}</h1>
-          <p className="mt-0.5 text-xs leading-relaxed opacity-75">
-            {wishlist.giftNote || wishlist.bio || "Send a gift directly. Delivery details stay private."}
-          </p>
-        </div>
-      </TgCard>
+        <button
+          type="button"
+          onClick={() => setStreakOpen(true)}
+          className="glass-card relative grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-rose"
+          aria-label={streak?.active ? `Streak ${streak.days} days, open` : "Open streak"}
+        >
+          <Flame className={`h-5 w-5 ${streak?.active ? "fill-rose" : ""}`} />
+          {streak && streak.days > 0 && (
+            <span className="absolute -bottom-1 rounded-full bg-ink px-1.5 text-[9px] font-semibold text-paper">
+              {streak.days}
+            </span>
+          )}
+        </button>
+      </header>
 
       {invite?.eligible && invite.accepted && (
         <p className="px-1 text-center text-xs opacity-65">
@@ -130,49 +183,10 @@ export default function WishlistPage() {
           No gifts are listed on this wishlist yet.
         </TgCard>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-4">
           {wishlist.items.map((item) => (
             <li key={item.variantId}>
-              <TgCard className="overflow-hidden p-0">
-                <button
-                  type="button"
-                  className="flex w-full gap-3 p-3 text-left sm:gap-4 sm:p-4"
-                  onClick={() => setOpen(item)}
-                >
-                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-ink/10 sm:h-28 sm:w-28">
-                    {item.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-gradient-to-br from-rose/15 to-gold/10">
-                        <Gift className="h-8 w-8 text-gold/70" />
-                      </div>
-                    )}
-                    {item.available === 0 && (
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-[10px] font-semibold uppercase tracking-wide text-paper">
-                        Sold out
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-gold">
-                      {item.type === "DIGITAL" ? "Digital" : "Physical"}
-                    </span>
-                    <p className="font-serif text-lg leading-snug line-clamp-2">{item.productName}</p>
-                    <p className="text-sm opacity-75">{formatInr(item.pricePaise)}</p>
-                  </div>
-                </button>
-                <div className="border-t border-[var(--glass-border)] px-3 pb-3 pt-2 sm:px-4">
-                  <button
-                    type="button"
-                    className="w-full rounded-full bg-ink py-2.5 text-sm font-medium text-paper disabled:opacity-40"
-                    disabled={item.available === 0}
-                    onClick={() => giftThis(item)}
-                  >
-                    Gift · {formatInr(item.pricePaise + item.shippingPaise)}
-                  </button>
-                </div>
-              </TgCard>
+              <GiftProductCard item={item} onOpen={() => setOpen(item)} onGift={() => giftThis(item)} />
             </li>
           ))}
         </ul>
@@ -181,6 +195,14 @@ export default function WishlistPage() {
       <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs opacity-60">
         <ShieldCheck className="h-3.5 w-3.5" /> Creator receives the item, never cash. Address stays private.
       </p>
+
+      {streakOpen && streak && (
+        <StreakModal
+          slug={params.slug}
+          streak={streak}
+          onClose={() => setStreakOpen(false)}
+        />
+      )}
 
       {inviteOpen && invite?.creatorName && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center">
