@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Flame, Sparkles, X } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
+import { CircularGallery } from "@/components/ui/circular-gallery";
 import { loadStreak, StreakModal, type StreakStatus } from "@/features/telegram/streak-modal";
 import { useTelegramSession } from "@/features/telegram/session";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
@@ -188,66 +189,52 @@ export default function WishlistPage() {
           No gifts are listed on this wishlist yet.
         </TgCard>
       ) : (
-        <section
-          className="-mx-5 flex min-h-0 flex-1 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          aria-label="Wishlist products"
-        >
-          <div
-            aria-hidden
-            className="shrink-0 snap-none"
-            style={{ width: "calc((100% - (100% - 1.5rem) / 1.4) / 2 - 0.75rem)" }}
-          />
-          {wishlist.items.map((item) => {
-            const soldOut = item.available === 0;
-            return (
-              <article
-                key={item.variantId}
-                className="relative h-full shrink-0 snap-center overflow-hidden rounded-[1.75rem] border border-white/15 bg-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.4)]"
-                style={{ width: "calc((100% - 1.5rem) / 1.4)" }}
-              >
-                <button
-                  type="button"
-                  className="absolute inset-0"
-                  onClick={() => setOpen(item)}
-                  aria-label={`Details for ${item.productName}`}
-                >
-                  {item.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={GIFT_PLACEHOLDER} alt="" className="h-full w-full object-cover" />
-                  )}
-                </button>
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-3 p-4">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70">
-                      {item.type === "DIGITAL" ? "Digital" : "Physical"}
-                    </p>
-                    <h2 className="font-serif text-2xl leading-tight text-white line-clamp-2">{item.productName}</h2>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
+        <div className="-mx-5 min-h-0 flex-1">
+          <CircularGallery
+            items={wishlist.items.map((item) => ({
+              image: item.imageUrl || GIFT_PLACEHOLDER,
+              text: item.productName,
+              alt: item.productName,
+            }))}
+            bend={1.6}
+            itemSize={1}
+            gap={0.08}
+            borderRadius={0.07}
+            wave={0.65}
+            fadeEdges={0.05}
+            shadow={0.45}
+            showTitles={false}
+            textColor="#faf5ee"
+            scrollEase={0.08}
+            scrollSpeed={1.5}
+            openOnClick={false}
+            onItemClick={(_item, index) => setOpen(wishlist.items[index] ?? null)}
+            renderOverlay={(_item, index) => {
+              const item = wishlist.items[index];
+              if (!item) return null;
+              const soldOut = item.available === 0;
+              return (
+                <div className="bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-4 pt-16">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70">
+                    {item.type === "DIGITAL" ? "Digital" : "Physical"}
+                  </p>
+                  <h2 className="font-serif text-2xl leading-tight text-white line-clamp-2">{item.productName}</h2>
+                  <div className="mt-3 flex items-center justify-between gap-3">
                     <p className="font-serif text-2xl text-white">{formatInr(item.pricePaise)}</p>
                     <button
                       type="button"
                       disabled={soldOut}
                       onClick={() => giftThis(item)}
-                      className="pointer-events-auto rounded-full bg-white px-5 py-2.5 text-sm font-medium text-[#141019] disabled:opacity-40"
+                      className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-[#141019] disabled:opacity-40"
                     >
                       {soldOut ? "Sold out" : "Gift this"}
                     </button>
                   </div>
                 </div>
-            </article>
-          );
-          })}
-          <div
-            aria-hidden
-            className="shrink-0 snap-none"
-            style={{ width: "calc((100% - (100% - 1.5rem) / 1.4) / 2 - 0.75rem)" }}
+              );
+            }}
           />
-        </section>
+        </div>
       )}
 
       {streakOpen && streak && (

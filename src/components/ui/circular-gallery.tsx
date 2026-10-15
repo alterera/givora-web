@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type HTMLAttributes } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 
 export type GalleryItem = {
   image: string;
@@ -32,6 +32,8 @@ export interface CircularGalleryProps extends Omit<HTMLAttributes<HTMLDivElement
   intro?: boolean;
   onItemClick?: (item: GalleryItem, index: number) => void;
   onActiveChange?: (index: number) => void;
+  /** Drawn on the centered card. Pointer events here do not drag the gallery. */
+  renderOverlay?: (item: GalleryItem, index: number) => ReactNode;
   dpr?: number;
   style?: CSSProperties;
 }
@@ -360,6 +362,7 @@ export function CircularGallery({
   intro = true,
   onItemClick,
   onActiveChange,
+  renderOverlay,
   dpr,
   className = '',
   style,
@@ -369,6 +372,7 @@ export function CircularGallery({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelsRef = useRef<HTMLDivElement>(null);
   const captionRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const engineRef = useRef<Engine | null>(null);
   const fontRef = useRef(font);
@@ -556,10 +560,10 @@ export function CircularGallery({
 
     const measure = () => {
       const s = settingsRef.current;
-      const height = 0.6 * view.height * s.itemSize;
-      const width = height * s.itemAspect;
-      const scale = Math.min(1, (view.width * 0.82) / width);
-      return { w: width * scale, h: height * scale, spacing: width * scale * (1 + s.gap) };
+      // Width leaves about 20% of each neighbour visible: spacing = W/2 + 0.3W + gap*W.
+      const width = (view.width * 0.5) / (0.7 + s.gap);
+      const height = Math.min(view.height * 0.94, view.height * s.itemSize);
+      return { w: width, h: height, spacing: width * (1 + s.gap) };
     };
 
     const arcOf = (x: number) => {
@@ -763,6 +767,20 @@ export function CircularGallery({
         caption.style.fontWeight = '400';
       }
       caption.style.fontSize = `${captionSize() * 0.8}px`;
+      const overlay = overlayRef.current;
+      if (overlay) {
+        const card = cards.find(entry => entry.slot === state.active);
+        if (!card) {
+          overlay.style.opacity = '0';
+        } else {
+          const cssX = view.width / 2 + card.x;
+          const cssY = view.height / 2 - card.y;
+          overlay.style.width = `${card.w}px`;
+          overlay.style.height = `${card.h}px`;
+          overlay.style.transform = `translate(${cssX}px, ${cssY}px) translate(-50%, -50%) rotate(${-card.angle}rad)`;
+          overlay.style.opacity = String(card.alpha);
+        }
+      }
     };
 
     const nearest = () => Math.round(state.target / Math.max(state.spacing, 1));
@@ -937,7 +955,8 @@ export function CircularGallery({
     };
 
     const onPointerDown = (event: PointerEvent) => {
-      if (event.button !== 0 || (event.target as Element).closest('[data-gallery-close]')) return;
+      const target = event.target as Element;
+      if (event.button !== 0 || target.closest('[data-gallery-close]') || target.closest('[data-gallery-overlay]')) return;
       const p = point(event);
       state.drag = {
         id: event.pointerId,
@@ -1177,6 +1196,11 @@ export function CircularGallery({
     >
       <canvas ref={canvasRef} className={CLASSES.canvas} aria-hidden="true" />
       <div ref={labelsRef} className={CLASSES.labels} aria-hidden="true" />
+      <div ref={overlayRef} data-gallery-overlay="" className="pointer-events-none absolute left-0 top-0 z-10 overflow-hidden rounded-[1.6rem]">
+        {renderOverlay && current ? (
+          <div className="pointer-events-auto absolute inset-x-0 bottom-0">{renderOverlay(current, active % count)}</div>
+        ) : null}
+      </div>
       <div ref={captionRef} className={CLASSES.caption} aria-hidden={!open}>
         {current?.description && <p className={CLASSES.captionText}>{current.description}</p>}
       </div>
