@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Flame, ShieldCheck, Sparkles, X } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
-import { GiftProductCard } from "@/features/telegram/gift-product-card";
+import { CircularGallery } from "@/components/ui/circular-gallery";
 import { loadStreak, StreakModal, type StreakStatus } from "@/features/telegram/streak-modal";
 import { useTelegramSession } from "@/features/telegram/session";
 import { TgCard, TgPage } from "@/features/telegram/tg-shell";
@@ -26,6 +26,12 @@ type Item = {
   deliveryInfo: string | null;
   refundTerms: string | null;
 };
+
+const GIFT_PLACEHOLDER =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000"><rect width="100%" height="100%" fill="#1a1520"/><text x="50%" y="52%" fill="#fbbf24" font-size="42" text-anchor="middle" font-family="sans-serif">Gift</text></svg>`,
+  );
 
 type Wishlist = {
   displayName: string;
@@ -55,6 +61,7 @@ export default function WishlistPage() {
   } | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const [activeItem, setActiveItem] = useState(0);
 
   useEffect(() => {
     void tgApi<Wishlist>(`/api/v1/creators/${params.slug}`)
@@ -183,13 +190,46 @@ export default function WishlistPage() {
           No gifts are listed on this wishlist yet.
         </TgCard>
       ) : (
-        <ul className="space-y-4">
-          {wishlist.items.map((item) => (
-            <li key={item.variantId}>
-              <GiftProductCard item={item} onOpen={() => setOpen(item)} onGift={() => giftThis(item)} />
-            </li>
-          ))}
-        </ul>
+        <section className="-mx-5 space-y-3">
+          <div className="relative h-[340px] w-full">
+            <CircularGallery
+              items={wishlist.items.map((item) => ({
+                image: item.imageUrl || GIFT_PLACEHOLDER,
+                text: item.productName,
+                description: item.description,
+                alt: item.productName,
+              }))}
+              bend={2}
+              itemSize={0.72}
+              itemAspect={0.86}
+              gap={0.18}
+              borderRadius={0.08}
+              wave={0.45}
+              fadeEdges={0.08}
+              shadow={0.35}
+              textColor="#faf5ee"
+              font="600 18px sans-serif"
+              scrollEase={0.08}
+              scrollSpeed={1.6}
+              openOnClick={false}
+              onActiveChange={setActiveItem}
+              onItemClick={(_item, index) => setOpen(wishlist.items[index] ?? null)}
+            />
+          </div>
+          {wishlist.items[activeItem] && (
+            <div className="flex items-center justify-between gap-3 px-5">
+              <p className="font-serif text-2xl">{formatInr(wishlist.items[activeItem].pricePaise)}</p>
+              <button
+                type="button"
+                className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper disabled:opacity-40"
+                disabled={wishlist.items[activeItem].available === 0}
+                onClick={() => giftThis(wishlist.items[activeItem])}
+              >
+                {wishlist.items[activeItem].available === 0 ? "Sold out" : "Gift this"}
+              </button>
+            </div>
+          )}
+        </section>
       )}
 
       <p className="flex items-center justify-center gap-1.5 pt-1 text-center text-xs opacity-60">

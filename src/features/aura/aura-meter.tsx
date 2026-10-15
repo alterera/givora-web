@@ -22,7 +22,7 @@ export function AuraMeter({ aura, compact }: { aura: AuraSummary; compact?: bool
           </p>
         </div>
         {!compact && (
-          <Link href="/tg/profile/aura" className="text-xs font-medium text-rose underline opacity-90">
+          <Link href="/tg/aura" className="text-xs font-medium text-rose underline opacity-90">
             Activity
           </Link>
         )}

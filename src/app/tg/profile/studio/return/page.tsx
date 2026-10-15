@@ -64,8 +64,8 @@ function ReturnInner() {
       <TgCard className="text-left text-xs opacity-80">
         Purchased cosmetics are visual only and do not change earned Aura or creator rankings.
       </TgCard>
-      <Link className="text-sm underline opacity-80" href="/tg/profile/studio">
-        Back to Studio
+      <Link className="text-sm underline opacity-80" href="/tg/aura">
+        Back to Aura
       </Link>
     </TgPage>
   );

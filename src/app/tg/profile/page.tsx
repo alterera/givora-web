@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ChevronRight, Sparkles } from "lucide-react";
 import { useTelegramSession } from "@/features/telegram/session";
 import { TgPage } from "@/features/telegram/tg-shell";
 import { AuraMeter, type AuraSummary } from "@/features/aura/aura-meter";
@@ -62,9 +60,6 @@ export default function ProfilePage() {
       {aura && (
         <section className="rounded-[1.75rem] border border-white/12 bg-white/[0.07] p-5 backdrop-blur-2xl">
           <AuraMeter aura={aura} />
-          <p className="mt-3 text-xs leading-relaxed text-ink/60">
-            Aura is how you show up on GivoraWorld. It never buys a reply or faster delivery.
-          </p>
           {aura.milestones.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {aura.milestones.map((milestone) => (
@@ -76,33 +71,6 @@ export default function ProfilePage() {
           )}
         </section>
       )}
-
-      <Link
-        href="/tg/profile/studio"
-        className="flex items-center justify-between rounded-[1.5rem] border border-white/12 bg-white/[0.07] px-4 py-4 backdrop-blur-2xl"
-      >
-        <span className="flex items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-gold/15 text-gold">
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <span>
-            <span className="block text-sm font-medium">Aura Studio</span>
-            <span className="block text-xs text-ink/60">Frames and effects for your profile</span>
-          </span>
-        </span>
-        <ChevronRight className="h-4 w-4 text-ink/50" />
-      </Link>
-
-      <Link
-        href="/tg/profile/aura"
-        className="flex items-center justify-between rounded-[1.5rem] border border-white/12 bg-white/[0.07] px-4 py-4 backdrop-blur-2xl"
-      >
-        <span>
-          <span className="block text-sm font-medium">Aura activity</span>
-          <span className="block text-xs text-ink/60">Invites, gifts, and adjustments</span>
-        </span>
-        <ChevronRight className="h-4 w-4 text-ink/50" />
-      </Link>
     </TgPage>
   );
 }

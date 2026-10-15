@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Gift, House, Inbox, LayoutDashboard, Send, UserRound } from "lucide-react";
+import { Gift, House, Inbox, LayoutDashboard, Send, Sparkles, UserRound } from "lucide-react";
 import { Dock, type DockItem } from "@/components/arc/dock/dock";
 import { useTelegramSession } from "@/features/telegram/session";
 import { tgApi } from "@/lib/tg-api";
@@ -10,6 +10,7 @@ import { tgApi } from "@/lib/tg-api";
 const fanItems: DockItem[] = [
   { id: "/tg", label: "Home", icon: <House /> },
   { id: "/tg/orders", label: "Sent", icon: <Send /> },
+  { id: "/tg/aura", label: "Aura", icon: <Sparkles /> },
   { id: "/tg/profile", label: "Profile", icon: <UserRound /> },
 ];
 
@@ -17,12 +18,16 @@ const creatorItems: DockItem[] = [
   { id: "/tg/creator", label: "Studio", icon: <LayoutDashboard /> },
   { id: "/tg/creator/wishlist", label: "Wishlist", icon: <Gift /> },
   { id: "/tg/creator/gifts", label: "Gifts", icon: <Inbox /> },
+  { id: "/tg/aura", label: "Aura", icon: <Sparkles /> },
   { id: "/tg/profile", label: "Profile", icon: <UserRound /> },
 ];
 
 function selectedId(path: string, items: DockItem[]) {
-  const match = items.find((item) => (item.id === "/tg" ? path === "/tg" : path.startsWith(item.id)));
-  return match?.id ?? items[0]?.id ?? null;
+  const matches = items.filter((item) =>
+    item.id === "/tg" ? path === "/tg" : path === item.id || path.startsWith(`${item.id}/`),
+  );
+  matches.sort((a, b) => b.id.length - a.id.length);
+  return matches[0]?.id ?? null;
 }
 
 export function BottomDeck() {
