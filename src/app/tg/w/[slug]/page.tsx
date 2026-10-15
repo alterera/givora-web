@@ -196,13 +196,14 @@ export default function WishlistPage() {
               text: item.productName,
               alt: item.productName,
             }))}
-            bend={1.6}
+            bend={0.8}
             itemSize={1}
-            gap={0.08}
-            borderRadius={0.07}
-            wave={0.65}
-            fadeEdges={0.05}
-            shadow={0.45}
+            itemAspect={0.8}
+            gap={0.04}
+            borderRadius={0.06}
+            wave={0.35}
+            fadeEdges={0.02}
+            shadow={0.4}
             showTitles={false}
             textColor="#faf5ee"
             scrollEase={0.08}
@@ -214,23 +215,21 @@ export default function WishlistPage() {
               if (!item) return null;
               const soldOut = item.available === 0;
               return (
-                <div className="bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-4 pt-16">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70">
-                    {item.type === "DIGITAL" ? "Digital" : "Physical"}
-                  </p>
-                  <h2 className="font-serif text-2xl leading-tight text-white line-clamp-2">{item.productName}</h2>
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <p className="font-serif text-2xl text-white">{formatInr(item.pricePaise)}</p>
+                <>
+                  <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur-md">
+                    {item.type === "DIGITAL" ? "Virtual" : "Physical"}
+                  </span>
+                  <div className="absolute inset-x-3 bottom-4">
                     <button
                       type="button"
                       disabled={soldOut}
                       onClick={() => giftThis(item)}
-                      className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-[#141019] disabled:opacity-40"
+                      className="pointer-events-auto w-full rounded-full bg-white/95 py-3 text-sm font-medium text-[#141019] shadow-lg backdrop-blur-md disabled:opacity-40"
                     >
                       {soldOut ? "Sold out" : "Gift this"}
                     </button>
                   </div>
-                </div>
+                </>
               );
             }}
           />

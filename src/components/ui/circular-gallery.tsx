@@ -560,10 +560,17 @@ export function CircularGallery({
 
     const measure = () => {
       const s = settingsRef.current;
-      // Width leaves about 20% of each neighbour visible: spacing = W/2 + 0.3W + gap*W.
-      const width = (view.width * 0.5) / (0.7 + s.gap);
-      const height = Math.min(view.height * 0.94, view.height * s.itemSize);
-      return { w: width, h: height, spacing: width * (1 + s.gap) };
+      // About 8% of each neighbour stays visible, and the card keeps itemAspect instead of stretching tall.
+      const peek = 0.08;
+      let width = (view.width * 0.5) / (0.5 + s.gap + peek);
+      let height = width / s.itemAspect;
+      const maxHeight = view.height * 0.92;
+      if (height > maxHeight) {
+        height = maxHeight;
+        width = height * s.itemAspect;
+      }
+      const scale = Math.min(s.itemSize, 1.15);
+      return { w: width * scale, h: height * scale, spacing: width * scale * (1 + s.gap) };
     };
 
     const arcOf = (x: number) => {
@@ -1198,7 +1205,7 @@ export function CircularGallery({
       <div ref={labelsRef} className={CLASSES.labels} aria-hidden="true" />
       <div ref={overlayRef} data-gallery-overlay="" className="pointer-events-none absolute left-0 top-0 z-10 overflow-hidden rounded-[1.6rem]">
         {renderOverlay && current ? (
-          <div className="pointer-events-auto absolute inset-x-0 bottom-0">{renderOverlay(current, active % count)}</div>
+          <div className="pointer-events-none absolute inset-0">{renderOverlay(current, active % count)}</div>
         ) : null}
       </div>
       <div ref={captionRef} className={CLASSES.caption} aria-hidden={!open}>
