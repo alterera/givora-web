@@ -8,6 +8,7 @@ import {
   ExternalLink,
   LayoutDashboard,
   Package,
+  Tags,
   Palette,
   Sparkles,
   Truck,
@@ -29,6 +30,7 @@ const mainNav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/creators", label: "Creators & Users", icon: Users },
   { href: "/admin/products", label: "Catalogue", icon: Package },
+  { href: "/admin/products/categories", label: "Categories", icon: Tags },
   { href: "/admin/orders", label: "Shipments", icon: Truck },
 ];
 

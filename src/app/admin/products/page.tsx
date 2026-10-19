@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Pencil, Plus, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ImagePlus, Pencil, Plus, Sparkles, Tags, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import { uploadProductImage } from "@/lib/admin-product-media";
@@ -18,10 +18,26 @@ export type AdminProduct = {
   name: string;
   slug: string;
   description: string;
+  story: string | null;
   status: string;
   type: string;
-  images: Array<{ id: string; url: string; alt: string | null }>;
-  variants: Array<{ id: string; sku: string; name: string; onHand: number; reserved: number; pricePaise: number }>;
+  shippingPaise: number;
+  deliveryInfo: string | null;
+  refundTerms: string | null;
+  categoryId: string | null;
+  occasionId: string | null;
+  category: { id: string; name: string; slug: string } | null;
+  occasion: { id: string; name: string; slug: string } | null;
+  images: Array<{ id: string; url: string; alt: string | null; sortOrder: number }>;
+  variants: Array<{
+    id: string;
+    sku: string;
+    name: string;
+    onHand: number;
+    reserved: number;
+    pricePaise: number;
+    isActive: boolean;
+  }>;
 };
 
 function slugify(input: string) {
@@ -47,6 +63,13 @@ export default function AdminProductsPage() {
   const [sku, setSku] = useState("");
   const [priceRupees, setPriceRupees] = useState("1");
   const [busy, setBusy] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [productType, setProductType] = useState<"PHYSICAL" | "DIGITAL">("PHYSICAL");
+
+  const filtered = useMemo(() => {
+    if (statusFilter === "ALL") return products;
+    return products.filter((p) => p.status === statusFilter);
+  }, [products, statusFilter]);
 
   function refresh() {
     return queryClient.invalidateQueries({ queryKey: ["admin-products"] });
@@ -67,7 +90,8 @@ export default function AdminProductsPage() {
           name: payload.name,
           slug: payload.slug,
           description: payload.description,
-          status: "ACTIVE",
+          status: "DRAFT",
+          type: productType,
         }),
       });
       await api(`/api/v1/admin/products/${product.id}/variants`, {
@@ -109,6 +133,19 @@ export default function AdminProductsPage() {
     });
   }
 
+  async function removeProduct(product: AdminProduct) {
+    if (!window.confirm(`Remove "${product.name}"? Products on wishlists are archived instead of deleted.`)) return;
+    try {
+      const result = await api<{ archived?: boolean; deleted?: boolean }>(`/api/v1/admin/products/${product.id}`, {
+        method: "DELETE",
+      });
+      toast.success(result.archived ? "Product archived" : "Product deleted");
+      await refresh();
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : "Could not remove product");
+    }
+  }
+
   async function quickUpload(productId: string, file: File) {
     try {
       await uploadProductImage(productId, file);
@@ -127,6 +164,10 @@ export default function AdminProductsPage() {
         title="Catalogue"
         description="Manage gift products, images, pricing, and inventory."
       >
+        <Link href="/admin/products/categories" className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted/40">
+          <Tags className="h-4 w-4" />
+          Categories
+        </Link>
         <Button type="button" variant="ghost" className="rounded-lg" onClick={() => setShowCreate((v) => !v)}>
           <Plus className="h-4 w-4" />
           New product
@@ -161,6 +202,17 @@ export default function AdminProductsPage() {
             <Field label="Slug" value={slug} onChange={(e) => setSlug(slugify(e.target.value))} required />
             <Field label="Price (₹)" type="number" min={1} value={priceRupees} onChange={(e) => setPriceRupees(e.target.value)} required />
             <Field label="SKU" value={sku} onChange={(e) => setSku(e.target.value)} required />
+            <label className="block text-sm sm:col-span-2">
+              <span className="mb-1 block text-muted-foreground">Type</span>
+              <select
+                className="w-full rounded-lg border border-border bg-background px-3 py-2"
+                value={productType}
+                onChange={(e) => setProductType(e.target.value as "PHYSICAL" | "DIGITAL")}
+              >
+                <option value="PHYSICAL">Physical gift</option>
+                <option value="DIGITAL">Digital / virtual</option>
+              </select>
+            </label>
             <div className="sm:col-span-2">
               <TextArea label="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
             </div>
@@ -172,6 +224,19 @@ export default function AdminProductsPage() {
       )}
 
       <AdminCard className="overflow-hidden">
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
+          <span className="text-xs text-muted-foreground">Status</span>
+          {["ALL", "ACTIVE", "DRAFT", "ARCHIVED"].map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={`rounded-full px-3 py-1 text-xs font-medium ${statusFilter === value ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}
+              onClick={() => setStatusFilter(value)}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px] text-left text-sm">
             <thead className="border-b border-border bg-muted/30 text-xs uppercase tracking-wider text-muted-foreground">
@@ -185,7 +250,7 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {products.map((product) => {
+              {filtered.map((product) => {
                 const variant = product.variants[0];
                 const thumb = product.images[0]?.url;
                 return (
@@ -236,6 +301,13 @@ export default function AdminProductsPage() {
                           <Pencil className="h-3.5 w-3.5" />
                           Edit
                         </Link>
+                        <button
+                          type="button"
+                          className="inline-flex items-center rounded-lg border border-border px-2 py-1.5 text-xs text-rose hover:bg-rose/10"
+                          onClick={() => void removeProduct(product)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </td>
                   </tr>
