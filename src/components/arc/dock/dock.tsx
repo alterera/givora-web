@@ -18,6 +18,8 @@ export type DockItem = {
   shortcut?: string;
   badge?: number;
   items?: DockItem[];
+  /** Stable DOM anchor for guided tours (data-tour value). */
+  tourTarget?: string;
 };
 
 type DockProps = {
@@ -237,7 +239,8 @@ export function Dock({
               aria-controls={item.items && openGroup === item.id ? trayId : undefined}
               aria-label={item.items && shown ? `${item.label}: ${shown.label}${selected ? ", selected" : ""}` : name}
               tabIndex={index === focusIndex ? 0 : -1}
-              className="relative flex h-11 min-w-[3.25rem] flex-1 touch-pan-y items-center justify-center rounded-full text-ink outline-none focus-visible:ring-2 focus-visible:ring-gold/70 sm:min-w-[3.5rem]"
+              data-tour={item.tourTarget}
+              className="relative flex h-10 min-w-[2.85rem] flex-1 touch-pan-y items-center justify-center rounded-full text-ink outline-none focus-visible:ring-2 focus-visible:ring-gold/70 sm:min-w-[3rem]"
               onFocus={() => {
                 setFocusIndex(index);
                 setHover(index);

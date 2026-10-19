@@ -114,9 +114,14 @@ export default function WishlistPage() {
 
   return (
     <TgPage className="flex h-[calc(var(--tg-viewport-height,100dvh)-7.25rem-env(safe-area-inset-bottom))] flex-col gap-3 !pb-1">
-      <WishlistTour slug={params.slug} enabled={hasGifts} />
-      <header className="flex items-start justify-between gap-3" data-tour="wishlist-header">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+      <WishlistTour
+        slug={params.slug}
+        enabled={hasGifts}
+        paused={inviteOpen}
+        creatorName={wishlist.displayName}
+      />
+      <header className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3" data-tour="wishlist-greeting">
           {photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photoUrl} alt="" decoding="async" className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white/20" />
@@ -169,7 +174,7 @@ export default function WishlistPage() {
           No gifts are listed on this wishlist yet.
         </TgCard>
       ) : (
-        <div className="-mx-5 min-h-0 flex-1" data-tour="wishlist-gallery">
+        <div className="relative -mx-5 min-h-0 flex-1" data-tour="wishlist-gallery-frame">
           <CircularGallery
             items={wishlist.items.map((item) => ({
               image: item.imageUrl || GIFT_PLACEHOLDER,
@@ -203,7 +208,6 @@ export default function WishlistPage() {
                     <button
                       type="button"
                       disabled={soldOut}
-                      data-tour={index === 0 ? "wishlist-gift-cta" : undefined}
                       onClick={() => giftThis(item)}
                       className="pointer-events-auto w-full rounded-full border border-white/40 bg-white/20 py-3 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_8px_24px_rgba(0,0,0,0.25)] backdrop-blur-xl [text-shadow:0_1px_2px_rgba(0,0,0,0.55)] disabled:opacity-40"
                     >
@@ -213,6 +217,11 @@ export default function WishlistPage() {
                 </>
               );
             }}
+          />
+          <div
+            data-tour="wishlist-gift-anchor"
+            className="pointer-events-none absolute inset-x-[12%] bottom-[11%] z-10 h-12 rounded-full border-2 border-dashed border-gold/50 bg-gold/5"
+            aria-hidden
           />
         </div>
       )}
