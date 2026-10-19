@@ -15,6 +15,7 @@ import { formatInr } from "@/lib/money";
 import { tgApi } from "@/lib/tg-api";
 import { useTgWishlistBundle, type WishlistBundle, type WishlistItem } from "@/features/telegram/queries";
 import { WishlistTour } from "@/features/telegram/wishlist-tour";
+import { RainbowText } from "@/components/ui/rainbow-text";
 
 const GIFT_PLACEHOLDER =
   "data:image/svg+xml," +
@@ -160,8 +161,10 @@ export default function WishlistPage() {
       </header>
 
       {invite?.eligible && invite.accepted && (
-        <p className="px-1 text-center text-xs opacity-65">
-          You&apos;re in {invite.creatorName ?? "this creator"}&apos;s circle.
+        <p className="px-1 text-center text-sm">
+          <RainbowText trigger="loop" speed={2.6} bandWidth={50} color="rgba(250, 245, 238, 0.45)">
+            You&apos;re in {invite.creatorName ?? "this creator"}&apos;s circle
+          </RainbowText>
         </p>
       )}
 
@@ -220,7 +223,7 @@ export default function WishlistPage() {
           />
           <div
             data-tour="wishlist-gift-anchor"
-            className="pointer-events-none absolute inset-x-[12%] bottom-[11%] z-10 h-12 rounded-full border-2 border-dashed border-gold/50 bg-gold/5"
+            className="pointer-events-none absolute inset-x-[12%] bottom-[11%] z-0 h-12 rounded-full opacity-0"
             aria-hidden
           />
         </div>
