@@ -39,12 +39,16 @@ export function BottomDeck() {
   const items = isCreator ? creatorItems : fanItems;
 
   return (
-    <div className="fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-3">
+    <div
+      data-tour="bottom-deck"
+      className="fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-2 sm:px-4"
+    >
       <Dock
         label="Givora"
         items={items}
         value={selectedId(path, items)}
         onValueChange={(id) => router.push(id)}
+        className="w-full max-w-[min(100%,28rem)]"
       />
     </div>
   );

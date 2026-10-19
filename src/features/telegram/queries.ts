@@ -48,6 +48,8 @@ export type OrderRow = {
   publicRef: string;
   status: string;
   totalPaise: number;
+  paymentExpiresAt: string;
+  createdAt: string;
   creator: { displayName: string };
   items: Array<{ productName: string; gift: { status: string } | null }>;
 };

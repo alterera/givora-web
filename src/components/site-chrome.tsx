@@ -12,20 +12,6 @@ export function SiteHeader() {
         <Link href="/" className="font-serif text-2xl tracking-tight text-ink">
           Givora
         </Link>
-        <nav className="flex items-center gap-5 text-sm text-ink/85">
-          <Link href="/creators" className="transition hover:text-gold">
-            Creators
-          </Link>
-          <Link href="/account/orders" className="transition hover:text-gold">
-            Sent
-          </Link>
-          <Link href="/account/wishlist" className="transition hover:text-gold">
-            My wishlist
-          </Link>
-          <Link href="/login" className="rounded-full bg-ink px-4 py-2 font-medium text-paper transition hover:opacity-90">
-            Sign in
-          </Link>
-        </nav>
       </div>
     </header>
   );

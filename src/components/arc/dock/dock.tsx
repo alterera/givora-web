@@ -164,7 +164,7 @@ export function Dock({
   }
 
   return (
-    <div ref={rootRef} className={cn("relative mx-auto w-max max-w-full", className)}>
+    <div ref={rootRef} className={cn("relative mx-auto w-full max-w-full", className)}>
       <AnimatePresence>
         {openItem?.items && (
           <motion.div
@@ -213,7 +213,7 @@ export function Dock({
         aria-label={label}
         aria-controls={openItem ? trayId : undefined}
         id={barId}
-        className="glass-card-strong flex max-w-full items-end gap-0.5 overflow-x-auto rounded-full p-1.5"
+        className="glass-card-strong flex w-full max-w-full items-end justify-between gap-1 overflow-x-auto rounded-full px-2 py-2"
         onMouseLeave={() => {
           setHover(null);
           setLabelWarm(false);
@@ -237,7 +237,7 @@ export function Dock({
               aria-controls={item.items && openGroup === item.id ? trayId : undefined}
               aria-label={item.items && shown ? `${item.label}: ${shown.label}${selected ? ", selected" : ""}` : name}
               tabIndex={index === focusIndex ? 0 : -1}
-              className="relative flex h-10 w-12 shrink-0 touch-pan-y items-center justify-center rounded-full text-ink outline-none focus-visible:ring-2 focus-visible:ring-gold/70"
+              className="relative flex h-11 min-w-[3.25rem] flex-1 touch-pan-y items-center justify-center rounded-full text-ink outline-none focus-visible:ring-2 focus-visible:ring-gold/70 sm:min-w-[3.5rem]"
               onFocus={() => {
                 setFocusIndex(index);
                 setHover(index);
@@ -279,7 +279,7 @@ export function Dock({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 2 }}
             className="pointer-events-none absolute bottom-[calc(100%+0.4rem)] text-[11px] font-medium tracking-wide text-ink"
-            style={{ left: 6 + labelIndex * 50, transform: "translateX(-10%)" }}
+            style={{ left: `calc(${((labelIndex + 0.5) / items.length) * 100}% )`, transform: "translateX(-50%)" }}
           >
             <span className="glass-card-strong rounded-full px-2.5 py-1">{items[labelIndex].label}</span>
           </motion.div>
